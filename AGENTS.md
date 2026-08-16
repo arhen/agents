@@ -28,3 +28,11 @@ Fall back to shell `grep`/`find` (via rtk) only when the tools lack the needed f
 ## Communication
 
 Caveman **ultra** mode is ACTIVE for every response: terse, no filler, all technical substance preserved. Off only on explicit "normal mode" / "stop caveman".
+
+## Global Instructions Ownership
+
+This file (~/.agents/AGENTS.md) is the SINGLE SOURCE OF TRUTH for global agent instructions, shared by all agents (pi, Claude Code, opencode, etc.) via symlink.
+
+- To change global behavior: EDIT THIS FILE, then `cd ~/.agents && git add -A && git commit -m "..." && git push` (repo: github.com/arhen/agents).
+- NEVER edit the per-agent copies (~/.pi/agent/AGENTS.md, ~/.claude/CLAUDE.md, opencode configs) — they are symlinks or derived; edits there are lost or ignored.
+- Same rule for global skills: add/remove in ~/.agents/skills/, then commit + push.
