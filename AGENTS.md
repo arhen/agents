@@ -1,0 +1,30 @@
+# Global Agent Instructions
+
+## Token Efficiency
+
+Run shell commands through `rtk` (token-optimized CLI proxy) to compact output:
+
+```sh
+rtk git status          # compacts git/gh/cargo/npm/ls/grep/... output
+rtk err <cmd>           # errors only
+rtk summary <cmd>       # condensed summary
+rtk log <file>          # deduped log output
+rtk json <file>         # structured JSON view
+rtk test <cmd>          # failures only
+rtk gain                # token savings stats
+```
+
+Prefix every segment in a chain: `rtk git add . && rtk git commit -m "msg" && rtk git push`.
+
+## File Search
+
+Prefer dedicated search tools over raw shell grep/find:
+
+- pi: `grep` / `find` tools (fff-backed, frecency-ranked)
+- Claude Code: `mcp__fff__grep`, `mcp__fff__find_files`, `mcp__fff__multi_grep`
+
+Fall back to shell `grep`/`find` (via rtk) only when the tools lack the needed flags.
+
+## Communication
+
+Caveman **ultra** mode is ACTIVE for every response: terse, no filler, all technical substance preserved. Off only on explicit "normal mode" / "stop caveman".
