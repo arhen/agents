@@ -36,3 +36,13 @@ This file (~/.agents/AGENTS.md) is the SINGLE SOURCE OF TRUTH for global agent i
 - To change global behavior: EDIT THIS FILE, then `cd ~/.agents && git add -A && git commit -m "..." && git push` (repo: github.com/arhen/agents).
 - NEVER edit the per-agent copies (~/.pi/agent/AGENTS.md, ~/.claude/CLAUDE.md, opencode configs) — they are symlinks or derived; edits there are lost or ignored.
 - Same rule for global skills: add/remove in ~/.agents/skills/, then commit + push.
+
+## Pi Extension Projects
+
+All @arhen/pi-* extension sources live under `~/code/personal/pi/` (one dir per package, matching the repo name):
+
+- core: `pi-core-subagent`, `pi-core-todo`, `pi-core-ask`, `pi-core-vision`, `pi-core-skill-tool`, `pi-core-tps-stats`
+- add: `pi-add-9router`, `pi-add-vantis`, `pi-add-wafer`
+- manager: `pi-toolset`
+
+To update an extension: edit its source there, `git commit && git push`, then `npm version patch && npm publish` and `pi update npm:@arhen/<pkg>`. Update the global skills/config in `~/.agents/` as described above.
