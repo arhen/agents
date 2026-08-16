@@ -45,4 +45,8 @@ All @arhen/pi-* extension sources live under `~/code/personal/pi/` (one dir per 
 - add: `pi-add-9router`, `pi-add-vantis`, `pi-add-wafer`
 - manager: `pi-toolset`
 
-To update an extension: edit its source there, `git commit && git push`, then `npm version patch && npm publish` and `pi update npm:@arhen/<pkg>`. Update the global skills/config in `~/.agents/` as described above.
+To update an extension: edit its source there, `git commit && git push`, then `npm version patch && npm publish` and `pi update npm:@arhen/<pkg>`.
+
+**Family version rule:** whenever any @arhen/pi-core-* package version is bumped, also bump `pi-toolset`'s patch version (`cd ~/code/personal/pi/pi-toolset && npm version patch && npm publish && git push`) so the family version tracks the installed core set.
+
+Update the global skills/config in `~/.agents/` as described above.
