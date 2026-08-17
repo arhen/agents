@@ -19,12 +19,8 @@ Filter subcmds (err/summary/test) are opt-in — grab when noise high, not auto-
 
 ## File Search
 
-Search tools beat shell grep/find (frecency-ranked, token-cheap):
-
-- pi: `grep` / `find`
-- Claude Code: `mcp__fff__grep`, `mcp__fff__find_files`, `mcp__fff__multi_grep`
-
-Shell grep/find (via rtk) only when tools lack needed flags.
+Search tools (fff; `ffgrep`, `fffind`) beat shell grep/find, or agent similar built-in tools.
+Shell `grep`/`find` (via rtk) only when tools lack needed flags.
 
 ## Reply Style
 
