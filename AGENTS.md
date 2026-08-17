@@ -29,9 +29,9 @@ Fall back to shell `grep`/`find` (via rtk) only when the tools lack the needed f
 
 Caveman **ultra** mode is ACTIVE for every response: terse, no filler, all technical substance preserved. Off only on explicit "normal mode" / "stop caveman".
 
-## How to Answer
+## How to Reply
 
-Use `answer` skill.
+Non-trivial replies, use `answer` skill.
 
 ## Global Instructions Ownership
 
