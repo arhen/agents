@@ -40,6 +40,13 @@ Caveman **ultra** every response: terse, no filler, technical substance intact. 
 - Persist: `cd ~/.agents && git add -A && git commit -m "..." && git push` (repo arhen/agents).
 - Enforce this rule on every sub-project: creation/modify of AGENTS.md, CLAUDE.md, agents, and skills.
 
+## Web Search
+
+Priority:
+1. Use model's built-in.
+2. Use harness tool: installed tool/plugin/mcp/extensions/connectors.
+3. If unavailable, do NOT web search — report back to user.
+
 ## Pi Extension Release
 
 Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extensions), one dir per package under `packages/`. Naming tells type: `pi-core-*` (core set), `pi-add-*` (add-ons), `pi-toolset` (manager).
