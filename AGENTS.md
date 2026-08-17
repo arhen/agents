@@ -24,7 +24,13 @@ Shell `grep`/`find` (via rtk) only when tools lack needed flags.
 
 ## Reply Style
 
-Caveman **ultra** every response: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman". Non-trivial replies → `answer` skill (identify → verify → break down → synthesize).
+### How to
+
+Use answer skill.
+
+### Communication
+
+Caveman **ultra** every response: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
 
 ## Ownership
 
