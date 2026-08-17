@@ -39,14 +39,16 @@ This file (~/.agents/AGENTS.md) is the SINGLE SOURCE OF TRUTH for global agent i
 
 ## Pi Extension Projects
 
-All @arhen/pi-* extension sources live under `~/code/personal/pi/` (one dir per package, matching the repo name):
+All @arhen/pi-* extension sources now live in the **monorepo** at `~/Code/personal/pi-extensions/` (single source of truth, repo `github.com/arhen/pi-extensions`). One dir per package under `packages/`:
 
-- core: `pi-core-subagent`, `pi-core-todo`, `pi-core-ask`, `pi-core-vision`, `pi-core-skill-tool`, `pi-core-tps-stats`
-- add: `pi-add-9router`, `pi-add-vantis`, `pi-add-wafer`
-- manager: `pi-toolset`
+- core: `packages/core/pi-core-subagent`, `packages/core/pi-core-todo`, `packages/core/pi-core-ask`, `packages/core/pi-core-vision`, `packages/core/pi-core-skill-tool`, `packages/core/pi-core-tps-stats`
+- add: `packages/add/pi-add-9router`, `packages/add/pi-add-vantis`, `packages/add/pi-add-wafer`, `packages/add/pi-add-code-diagnostic`
+- manager: `packages/pi-toolset`
 
-To update an extension: edit its source there, `git commit && git push`, then `npm version patch && npm publish` and `pi update npm:@arhen/<pkg>`.
+The old per-package repos (`~/code/personal/pi/...`) are archived (README points to the monorepo) — do NOT edit/push there.
 
-**Family version rule:** whenever any @arhen/pi-core-* package version is bumped, also bump `pi-toolset`'s patch version (`cd ~/code/personal/pi/pi-toolset && npm version patch && npm publish && git push`) so the family version tracks the installed core set.
+To update an extension: edit its source in the monorepo, `git commit && git push` (from `~/Code/personal/pi-extensions`), then `npm version patch && npm publish` from that package's dir and `pi update npm:@arhen/<pkg>`.
+
+**Family version rule:** whenever any @arhen/pi-core-* package version is bumped, also bump `pi-toolset`'s patch version (`cd ~/Code/personal/pi-extensions/packages/pi-toolset && npm version patch && npm publish && git push`) so the family version tracks the installed core set.
 
 Update the global skills/config in `~/.agents/` as described above.
