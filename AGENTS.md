@@ -2,57 +2,51 @@
 
 ## Token Efficiency
 
-Run shell commands through `rtk` (token-optimized CLI proxy) to compact output:
+`rtk` = output-compacting CLI proxy. Prefix shell cmds to cut token noise. Pass-through for non-compacting cmds — always safe:
 
 ```sh
-rtk git status          # compacts git/gh/cargo/npm/ls/grep/... output
-rtk err <cmd>           # errors only
-rtk summary <cmd>       # condensed summary
-rtk log <file>          # deduped log output
-rtk json <file>         # structured JSON view
-rtk test <cmd>          # failures only
-rtk gain                # token savings stats
+rtk git status       # compact git/gh/cargo/npm/ls/grep/... output
+rtk err <cmd>         # errors only
+rtk summary <cmd>     # condensed summary
+rtk log <file>        # deduped log output
+rtk json <file>       # structured JSON view
+rtk test <cmd>        # failures only
+rtk gain              # token savings stats
 ```
 
 Prefix each chain segment: `rtk git add . && rtk git commit -m "msg" && rtk git push`.
+Filter subcmds (err/summary/test) are opt-in — grab when noise high, not auto-added.
 
 ## File Search
 
-Prefer search tools over raw shell grep/find:
+Search tools beat shell grep/find (frecency-ranked, token-cheap):
 
-- pi: `grep` / `find` (fff-backed, frecency-ranked)
+- pi: `grep` / `find`
 - Claude Code: `mcp__fff__grep`, `mcp__fff__find_files`, `mcp__fff__multi_grep`
 
-Fall back to shell `grep`/`find` (via rtk) only when tools lack flags needed.
+Shell grep/find (via rtk) only when tools lack needed flags.
 
-## Communication
+## Reply Style
 
-Caveman **ultra** mode ACTIVE for every response: terse, no filler, technical substance preserved. Off only on explicit "normal mode" / "stop caveman".
+Caveman **ultra** every response: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman". Non-trivial replies → `answer` skill (identify → verify → break down → synthesize).
 
-## How to Reply
+## Ownership
 
-Use answer skill.
+`~/.agents/AGENTS.md` = SINGLE SOURCE, symlinked to all agents (pi, Claude Code, opencode). Same for skills: `~/.agents/skills/`.
 
-## Global Instructions Ownership
+- EDIT this file only; per-agent copies (`~/.pi/agent/`, `~/.claude/CLAUDE.md`, opencode) are symlinks/derived — edits lost.
+- Persist: `cd ~/.agents && git add -A && git commit -m "..." && git push` (repo arhen/agents).
 
-This file (`~/.agents/AGENTS.md`) = SINGLE SOURCE OF TRUTH for global agent instructions, shared via symlink by pi, Claude Code, opencode, etc.
+## Pi Extension Release
 
-- Change global behavior: EDIT THIS FILE, then `cd ~/.agents && git add -A && git commit -m "..." && git push` (repo: github.com/arhen/agents).
-- NEVER edit per-agent copies (`~/.pi/agent/AGENTS.md`, `~/.claude/CLAUDE.md`, opencode configs) — symlinks/derived; edits lost or ignored.
-- Same rule for global skills: add/remove in `~/.agents/skills/`, then commit + push.
+Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extensions), packages under `packages/`:
 
-## Pi Extension Projects
+core: `pi-core-{subagent,todo,ask,vision,skill-tool,tps-stats}`
+add: `pi-add-{9router,vantis,wafer,code-diagnostic}`
+manager: `pi-toolset`
 
-All @arhen/pi-* extension sources live in **monorepo** `~/Code/personal/pi-extensions/` (single source of truth, repo `github.com/arhen/pi-extensions`). One dir per package under `packages/`:
+Old per-pkg repos (`~/code/personal/pi/...`) archived — never edit/push.
 
-- core: `packages/core/pi-core-subagent`, `packages/core/pi-core-todo`, `packages/core/pi-core-ask`, `packages/core/pi-core-vision`, `packages/core/pi-core-skill-tool`, `packages/core/pi-core-tps-stats`
-- add: `packages/add/pi-add-9router`, `packages/add/pi-add-vantis`, `packages/add/pi-add-wafer`, `packages/add/pi-add-code-diagnostic`
-- manager: `packages/pi-toolset`
+Release cycle per package: edit source in monorepo → commit+push → `npm version patch && npm publish` from its dir → `pi update npm:@arhen/<pkg>`.
 
-Old per-package repos (`~/code/personal/pi/...`) archived (README points to monorepo) — do NOT edit/push there.
-
-Update extension: edit source in monorepo, `git commit && git push`, then `npm version patch && npm publish` from package dir and `pi update npm:@arhen/<pkg>`.
-
-**Family version rule:** bump any @arhen/pi-core-* package → also bump `pi-toolset` patch (`cd ~/Code/personal/pi-extensions/packages/pi-toolset && npm version patch && npm publish && git push`) so family version tracks installed core set.
-
-Update global skills/config in `~/.agents/` as above.
+**Family rule:** bump any `pi-core-*` → also bump `pi-toolset` patch (same cycle) — keeps installed core/toolset versions consistent.
