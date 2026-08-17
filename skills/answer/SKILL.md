@@ -1,4 +1,4 @@
 ---
 name: answer
-description: Tasks require to be identified, verify, then breaking problems down into sub-steps and synthesizing these steps into a precise answer.
+description: For Non-trivial replies; identify the task, verify assumptions, break into sub-steps, then synthesize those into one precise answer.
 ---
