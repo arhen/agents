@@ -39,11 +39,7 @@ Caveman **ultra** every response: terse, no filler, technical substance intact. 
 
 ## Pi Extension Release
 
-Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extensions), packages under `packages/`:
-
-core: `pi-core-{subagent,todo,ask,vision,skill-tool,tps-stats}`
-add: `pi-add-{9router,vantis,wafer,code-diagnostic}`
-manager: `pi-toolset`
+Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extensions), one dir per package under `packages/`. Naming tells type: `pi-core-*` (core set), `pi-add-*` (add-ons), `pi-toolset` (manager). Exact members change over time — don't trust a list, read `packages/`.
 
 Old per-pkg repos (`~/code/personal/pi/...`) archived — never edit/push.
 
