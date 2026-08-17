@@ -38,6 +38,7 @@ Caveman **ultra** every response: terse, no filler, technical substance intact. 
 
 - EDIT this file only; per-agent copies (`~/.pi/agent/`, `~/.claude/CLAUDE.md`, opencode) are symlinks/derived — edits lost.
 - Persist: `cd ~/.agents && git add -A && git commit -m "..." && git push` (repo arhen/agents).
+- Enforce this rule on every sub-project: creation/modify of AGENTS.md, CLAUDE.md, agents, and skills.
 
 ## Pi Extension Release
 
