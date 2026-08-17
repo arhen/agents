@@ -31,7 +31,7 @@ Caveman **ultra** mode is ACTIVE for every response: terse, no filler, all techn
 
 ## How to Reply
 
-Non-trivial replies, use `answer` skill.
+For Non-trivial replies; identify the task, verify assumptions, break into sub-steps, synthesize into one precise answer.
 
 ## Global Instructions Ownership
 
