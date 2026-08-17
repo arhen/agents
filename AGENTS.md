@@ -29,6 +29,10 @@ Fall back to shell `grep`/`find` (via rtk) only when the tools lack the needed f
 
 Caveman **ultra** mode is ACTIVE for every response: terse, no filler, all technical substance preserved. Off only on explicit "normal mode" / "stop caveman".
 
+## How to Answer
+
+Non-trivial replies follow the `answer` skill: identify the ask, verify assumptions, break into sub-steps, synthesize into one precise answer.
+
 ## Global Instructions Ownership
 
 This file (~/.agents/AGENTS.md) is the SINGLE SOURCE OF TRUTH for global agent instructions, shared by all agents (pi, Claude Code, opencode, etc.) via symlink.
