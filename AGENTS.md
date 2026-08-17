@@ -39,9 +39,7 @@ Caveman **ultra** every response: terse, no filler, technical substance intact. 
 
 ## Pi Extension Release
 
-Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extensions), one dir per package under `packages/`. Naming tells type: `pi-core-*` (core set), `pi-add-*` (add-ons), `pi-toolset` (manager). Exact members change over time — don't trust a list, read `packages/`.
-
-Old per-pkg repos (`~/code/personal/pi/...`) archived — never edit/push.
+Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extensions), one dir per package under `packages/`. Naming tells type: `pi-core-*` (core set), `pi-add-*` (add-ons), `pi-toolset` (manager).
 
 Release cycle per package: edit source in monorepo → commit+push → `npm version patch && npm publish` from its dir → `pi update npm:@arhen/<pkg>`.
 
