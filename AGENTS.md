@@ -4,15 +4,7 @@
 
 `rtk` = output-compacting CLI proxy. Prefix shell cmds to cut token noise. Pass-through for non-compacting cmds — always safe:
 
-```sh
-rtk git status       # compact git/gh/cargo/npm/ls/grep/... output
-rtk err <cmd>         # errors only
-rtk summary <cmd>     # condensed summary
-rtk log <file>        # deduped log output
-rtk json <file>       # structured JSON view
-rtk test <cmd>        # failures only
-rtk gain              # token savings stats
-```
+See rtk CLI; `rtk help` for usage.
 
 Prefix each chain segment: `rtk git add . && rtk git commit -m "msg" && rtk git push`.
 Filter subcmds (err/summary/test) are opt-in — grab when noise high, not auto-added.
