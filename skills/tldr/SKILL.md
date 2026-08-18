@@ -43,6 +43,34 @@ overrides caveman mode, wenyan mode, and all other output styles for the summary
 - Keep the decisions and the reason for each decision.
 - Keep file paths, commands, function names, and error strings exactly as written.
 - Remove the tool call narration. Keep only the result.
-- Make the length agree with the complexity. A small session gets 3 to 5 bullets.
-  A large session gets more, but each bullet stays on one line.
+- Obey the hard limits. Do not go above them:
+  - `## Done`: 5 bullets maximum. One line for each bullet. 15 words maximum.
+  - `## Current task`: 5 fields maximum. One line for each field.
+  - Total: 15 lines maximum.
+- Group the related items into one bullet. Do not make one bullet for each commit.
+- Write the result only. Do not write the cause, the method, or the review history.
+- Do not use tables, sub-bullets, or code blocks.
+- If the content is too large for the limits, keep the items with the highest risk.
+  Give the path to the full record instead of the details.
 - If the session has no completed work, write "No work is complete." Do not invent items.
+
+## Example
+
+A long session with 3 merged pull requests and 4 review rounds becomes this:
+
+```
+## Done
+
+- Merged 3 pull requests: web #446, api #340, ai-service #190.
+- Fixed the GenUI font scale, the Stop button, and the per-thread streaming.
+- Corrected 10 review findings. All threads are closed.
+- Verified the tests after the merge. All 3 services pass.
+
+## Current task
+
+- Task: Follow-up work after the merge
+- Status: blocked
+- Last step: The agent merged all branches and deleted them.
+- Next step: Create the `show-concurrent-chat-streaming` flag in PostHog.
+- Blocker: Stopped turns bill zero. ai-service must send the token usage.
+```
