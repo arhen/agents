@@ -42,6 +42,10 @@ overrides caveman mode, wenyan mode, and all other output styles for the summary
 - Keep the core instructions of the user. Remove all repeated text.
 - Keep the decisions and the reason for each decision.
 - Keep file paths, commands, function names, and error strings exactly as written.
+- Give a pointer for each item that has more detail somewhere else. Use the file path,
+  the URL, the pull request number, or the commit SHA. Put the pointer in the same line.
+  This lets the reader find the full record. It also keeps the bullet short.
+  Example: `- Merged 3 pull requests. See #446, #340, #190.`
 - Remove the tool call narration. Keep only the result.
 - Obey the hard limits. Do not go above them:
   - `## Done`: 5 bullets maximum. One line for each bullet. 15 words maximum.
@@ -62,7 +66,8 @@ A long session with 3 merged pull requests and 4 review rounds becomes this:
 ## Done
 
 - Merged 3 pull requests: web #446, api #340, ai-service #190.
-- Fixed the GenUI font scale, the Stop button, and the per-thread streaming.
+- Fixed the GenUI font scale in `tailwind.config.ts`. See commit 0d4318410.
+- Added the Stop button and the per-thread streaming. See commit 09eb0422d.
 - Corrected 10 review findings. All threads are closed.
 - Verified the tests after the merge. All 3 services pass.
 
