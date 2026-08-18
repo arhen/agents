@@ -42,10 +42,16 @@ overrides caveman mode, wenyan mode, and all other output styles for the summary
 - Keep the core instructions of the user. Remove all repeated text.
 - Keep the decisions and the reason for each decision.
 - Keep file paths, commands, function names, and error strings exactly as written.
-- Give a pointer for each item that has more detail somewhere else. Use the file path,
-  the URL, the pull request number, or the commit SHA. Put the pointer in the same line.
-  This lets the reader find the full record. It also keeps the bullet short.
-  Example: `- Merged 3 pull requests. See #446, #340, #190.`
+- Give a pointer for each item that has more detail somewhere else. Put the pointer in
+  the same line. This lets the reader find the full record. It also keeps the bullet short.
+- Write each pointer in the Markdown link format:
+  - Web page: `[label](https://...)`
+  - Pull request: `[#446](https://github.com/org/repo/pull/446)`
+  - Commit: `[0d43184](https://github.com/org/repo/commit/0d4318410)`
+  - Local file: ``[`src/app.ts`](src/app.ts)`` — use the path that the workspace uses.
+  - Local file with a line: ``[`src/app.ts:42`](src/app.ts#L42)``
+- Use a short label. Do not write the full URL as the label.
+- If you do not know the URL, write the plain identifier. Do not invent a URL.
 - Remove the tool call narration. Keep only the result.
 - Obey the hard limits. Do not go above them:
   - `## Done`: 5 bullets maximum. One line for each bullet. 15 words maximum.
@@ -65,9 +71,10 @@ A long session with 3 merged pull requests and 4 review rounds becomes this:
 ```
 ## Done
 
-- Merged 3 pull requests: web #446, api #340, ai-service #190.
-- Fixed the GenUI font scale in `tailwind.config.ts`. See commit 0d4318410.
-- Added the Stop button and the per-thread streaming. See commit 09eb0422d.
+- Merged 3 pull requests: [#446](https://github.com/org/web/pull/446),
+  [#340](https://github.com/org/api/pull/340), [#190](https://github.com/org/ai/pull/190).
+- Fixed the GenUI font scale in [`tailwind.config.ts`](tailwind.config.ts).
+- Added the Stop button and the per-thread streaming. See [09eb042](https://github.com/org/api/commit/09eb0422d).
 - Corrected 10 review findings. All threads are closed.
 - Verified the tests after the merge. All 3 services pass.
 
