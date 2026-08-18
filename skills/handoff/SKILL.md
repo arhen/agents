@@ -58,6 +58,8 @@ Branch / commit: <git branch @ short sha, dirty?>
 ## Rules
 
 - Accuracy over brevity. Compress prose, never facts.
+- Do not duplicate content already captured in other artifacts (specs, plans, ADRs,
+  issues, commits, diffs). Reference them by path or URL instead.
 - Verbatim: file paths, commands, symbol names, error strings, versions.
 - Only state what happened. No guesses. Unknown = write "unknown".
 - Drop tool-call narration, dead ends already resolved, and repeated text.
