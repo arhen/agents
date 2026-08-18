@@ -1,4 +1,4 @@
-# arhen/agents — global agent config
+# ~/.agents — Arhen's global agent config
 
 Single source of truth for agent instructions + curated skills. Cloned to `~/.agents/`, symlinked by pi and Claude Code.
 
