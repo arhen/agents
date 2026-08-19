@@ -2,7 +2,7 @@
 name: architecture-map
 description: Build or update an interactive isometric map of a repository's architecture — buildings sized by real measurements, neighborhoods by subsystem, animated flows tracing actual call paths, and a drift counter that fails CI when the map falls behind the code. Use when someone wants to see, explain, or onboard people to how a codebase fits together, or asks for an architecture diagram, system map, codebase overview, or "show me how this repo works". Adapts to the repo's design system; re-run to refresh.
 metadata:
-  version: 1.0.0
+  version: 1.1.0
 ---
 
 # Architecture map
@@ -38,13 +38,21 @@ Answer these from the repo. Do not ask.
 
 | Question | Where to look |
 |---|---|
-| Framework and router | `package.json`, `app/` vs `pages/` vs `src/routes/`, `vite.config`, `next.config`, `remix.config` |
+| Framework and router | `package.json` + `app/` vs `pages/` (Next.js/Remix/Vite), `composer.json` + `artisan` (Laravel), `pyproject.toml` + `uvicorn`/`main.py` (FastAPI), `vite.config`, `next.config`, `remix.config` |
+| Multi-service workspace | sibling service dirs (`web/`, `api/`, `ai-service/`, `data-service/`…), each with its own manifest and git repo — see the workspace note below |
 | Design tokens | global stylesheet for `--*` custom properties; `tailwind.config`; any `tokens`/`theme` module |
 | Dark mode mechanism | `.dark` class, `[data-theme]`, or `prefers-color-scheme` |
-| Test runner | `package.json` scripts, `vitest.config`, `jest.config` |
-| Package manager | lockfile |
+| Test runner | `package.json` scripts, `vitest.config`, `jest.config`, `phpunit.xml`, `pytest.ini`/`pyproject.toml` |
+| Package manager | lockfile (`package-lock.json`, `bun.lock`, `yarn.lock`, `composer.lock`, `uv.lock`/`poetry.lock`) |
 | Monorepo | `workspaces`, `pnpm-workspace.yaml`, `turbo.json` |
 | Existing map | a previous `architecture.config.json` — if present, this is an **update** |
+
+**Multi-service workspace.** frndOS-style layout: sibling service repos
+(`web/` Next.js, `api/` Laravel, `ai-service/`/`data-service/` FastAPI) under one
+workspace root. Map the whole workspace as one city — each service is a
+district, cross-service HTTP calls become the flows. Sources glob across
+service dirs (see Step 3). The proposer's `--root .` at workspace root clusters
+per top-level directory, which is exactly the service split you want.
 
 Then run the proposer to get a first read of the shape. It lives beside this
 file, not in the repo you are mapping, so resolve its path first:
@@ -86,7 +94,7 @@ Copy `$SKILL_DIR/assets/core/`, `assets/stores/` and `assets/components/` into
 the repo under the path you agreed (e.g. `src/architecture/`). These are dependency-free
 apart from React, and typecheck under `strict`.
 
-Then write `architecture.config.json` at the repo root:
+Then write `architecture.config.json` at the repo (or workspace) root:
 
 ```json
 {
@@ -96,6 +104,20 @@ Then write `architecture.config.json` at the repo root:
   "ignore": ["next-env.d.ts"]
 }
 ```
+
+**Workspace variant** — sources span every service, each with its language:
+
+```json
+{
+  "coverage": "web/src/architecture/coverage.json",
+  "output": "web/src/architecture/measured.generated.ts",
+  "sources": ["web/src/**/*.{ts,tsx}", "api/**/*.php", "ai-service/**/*.py", "data-service/**/*.py"],
+  "ignore": ["next-env.d.ts", "**/vendor/**", "**/node_modules/**", "**/.next/**", "**/__pycache__/**"]
+}
+```
+
+`ignore` matters more here — the sync script trusts your `sources` globs, so
+keep dependency/vendor/build dirs out explicitly.
 
 Copy `$SKILL_DIR/scripts/architecture-sync.mjs` into the repo's own `scripts/`
 and add
@@ -207,6 +229,10 @@ Past ~25 buildings the map stops being readable. The proposer folds the
 smallest siblings into a parent node that owns the wider glob — the partition
 stays total, only the drawing simplifies. If a repo genuinely needs more, map
 one package at a time rather than shrinking everything.
+
+A multi-service workspace of ~4 services usually lands inside the cap as one
+map (each service = a district, 4–6 buildings each). Bigger workspaces: map
+per service, each mounted in its own repo.
 
 ## What not to do
 

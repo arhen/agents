@@ -62,6 +62,36 @@ import { ARCHITECTURE } from '../architecture/graph'
 <ArchitectureMap client:only="react" data={ARCHITECTURE} />
 ```
 
+## Multi-service workspace
+
+Map the whole workspace as one city, mounted in the React app if there is one.
+`architecture.config.json` lives at the workspace root with `sources` spanning
+all service dirs; the map assets live under the web app's own tree (see
+`web/src/architecture/` in the config example), and `architecture-sync.mjs`
+runs from the workspace root with `ARCH_ROOT` or `--root` pointing there.
+
+Mount in the web app:
+
+```tsx
+// web/src/app/~/architecture/page.tsx
+import ArchitectureMap from '@/architecture/components/ArchitectureMap'
+import '@/architecture/components/keyframes.css'
+import { ARCHITECTURE } from '@/architecture/graph'
+
+export const metadata = {
+  title: 'Architecture',
+  robots: { index: false, follow: false },
+}
+
+export default function Page() {
+  return <ArchitectureMap data={ARCHITECTURE} />
+}
+```
+
+Sibling non-React services (Laravel, FastAPI, …) stay districts of that one
+map — no separate mount per service. The drift check runs at workspace root,
+so CI failure in any service fails the map's freshness check.
+
 ## Anything else, or no web app at all
 
 If the repo has no React app to host a page — a Go service, a Python library,
