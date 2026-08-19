@@ -1,0 +1,191 @@
+#!/usr/bin/env node
+import { globSync, readFileSync, writeFileSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
+
+/**
+ * Measures the repo for the architecture map, and reports what the map has
+ * stopped covering.
+ *
+ * The map's prose, its groups and its flows are written by hand and have to be
+ * — no scanner can say what a subsystem is *for*. But two things rot on their
+ * own: file counts and line totals go stale the moment code moves, and a whole
+ * new subsystem can appear with nothing on the map mentioning it. Those are
+ * exactly the two things a scanner is good at, so they live here instead of in
+ * the authored data.
+ *
+ * Coverage comes from `coverage.json`, which says which files each module is
+ * made of. Every source file must be claimed exactly once. A file nobody
+ * claims is the interesting failure: it means the repo grew something the map
+ * has not been told about, and it surfaces here and as "unmapped" on the page.
+ *
+ * Output is a pure function of the tree — no timestamp, no commit hash — so a
+ * run that finds nothing new rewrites the file byte for byte and leaves no
+ * diff. That is what makes it safe to hang off `predev` and `prebuild`.
+ *
+ * Run it, or `--check` to verify without writing (the mode CI cares about).
+ */
+
+const ROOT = process.env.ARCH_ROOT ?? process.cwd() + '/'
+const CONFIG = 'architecture.config.json'
+
+/** Defaults for a JS/TS repo; `architecture.config.json` overrides them. */
+const DEFAULTS = {
+  coverage: 'src/architecture/coverage.json',
+  output: 'src/architecture/measured.generated.ts',
+  sources: ['src/**/*.{ts,tsx,js,jsx,css}', 'scripts/**/*.{mjs,js,ts}'],
+  ignore: ['next-env.d.ts'],
+}
+
+function loadConfig() {
+  try {
+    return { ...DEFAULTS, ...JSON.parse(readFileSync(new URL(CONFIG, `file://${ROOT}`), 'utf8')) }
+  } catch {
+    return DEFAULTS
+  }
+}
+
+/**
+ * How specific a pattern is: the run of literal characters before the first
+ * wildcard. `src/pipeline/**` beats `src/**`, so a module claims its own files
+ * without every other module having to exclude them.
+ */
+function specificity(pattern) {
+  const wildcard = pattern.search(/[*?{[]/)
+  return wildcard === -1 ? pattern.length : wildcard
+}
+
+function claimants(coverage) {
+  const claims = []
+  for (const [nodeId, entry] of Object.entries(coverage)) {
+    // `$`-prefixed keys are notes to humans, not modules.
+    if (nodeId.startsWith('$')) continue
+    for (const pattern of entry.owns) {
+      claims.push({ nodeId, pattern, priority: entry.priority ?? 0, weight: specificity(pattern) })
+    }
+  }
+  return claims
+}
+
+export function measure(root = ROOT, config = loadConfig()) {
+  // A base without a trailing slash resolves relative paths against its
+  // *parent*, which silently reads the wrong tree.
+  const base = `file://${root.endsWith('/') ? root : `${root}/`}`
+  const cwd = { cwd: root }
+  const coverage = JSON.parse(readFileSync(new URL(config.coverage, base), 'utf8'))
+  const claims = claimants(coverage)
+  const ignore = [...config.ignore, config.output].map(
+    (p) => new RegExp(`^${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`),
+  )
+
+  const files = [...new Set(config.sources.flatMap((g) => globSync(g, cwd)))]
+    .map((f) => f.split('\\').join('/'))
+    .filter((f) => !ignore.some((re) => re.test(f)))
+    .sort()
+
+  const measured = {}
+  const unclaimed = []
+  const ambiguous = []
+  for (const nodeId of Object.keys(coverage)) {
+    if (!nodeId.startsWith('$')) measured[nodeId] = { count: 0, loc: 0 }
+  }
+
+  // Expand each pattern once. Globbing per pattern per file is the same answer
+  // for a few thousand times the work.
+  for (const claim of claims) {
+    claim.matches = new Set(globSync(claim.pattern, cwd).map((f) => f.split('\\').join('/')))
+  }
+
+  for (const file of files) {
+    const matches = claims.filter((c) => c.matches.has(file))
+    if (matches.length === 0) {
+      unclaimed.push(file)
+      continue
+    }
+    const best = matches.reduce((a, b) =>
+      b.priority !== a.priority ? (b.priority > a.priority ? b : a) : b.weight > a.weight ? b : a,
+    )
+    const tied = matches.filter(
+      (c) => c.nodeId !== best.nodeId && c.priority === best.priority && c.weight === best.weight,
+    )
+    if (tied.length > 0) ambiguous.push(`${file} → ${[best, ...tied].map((c) => c.nodeId).join(', ')}`)
+
+    measured[best.nodeId].count += 1
+    measured[best.nodeId].loc += readFileSync(new URL(file, base), 'utf8').split('\n').length
+  }
+
+  return { measured, unclaimed, ambiguous }
+}
+
+function render({ measured, unclaimed }) {
+  const entries = Object.entries(measured)
+    .filter(([, m]) => m.count > 0)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([id, m]) => `  '${id}': { count: ${m.count}, loc: ${m.loc} },`)
+    .join('\n')
+  const paths = unclaimed.length === 0 ? '' : `\n${unclaimed.map((f) => `  '${f}',`).join('\n')}\n`
+
+  return `/**
+ * @generated by scripts/architecture-sync.mjs — do not edit.
+ *
+ * Measured from the tree, so the map's numbers cannot drift from the code.
+ * \`UNCLAIMED\` is what no module on the map covers: run the sync script, then
+ * either give an existing module a wider pattern in coverage.json or add the
+ * node the repo has been missing.
+ */
+
+export const MEASURED: Record<string, { count: number; loc: number }> = {
+${entries}
+}
+
+export const UNCLAIMED: string[] = [${paths}]
+`
+}
+
+function main() {
+  const config = loadConfig()
+  const result = measure(ROOT, config)
+  const next = render(result)
+  const outPath = new URL(config.output, `file://${ROOT}`)
+  const previous = (() => {
+    try {
+      return readFileSync(outPath, 'utf8')
+    } catch {
+      return null
+    }
+  })()
+
+  if (result.ambiguous.length > 0) {
+    for (const line of result.ambiguous) console.error(`ambiguous: ${line}`)
+    console.error(
+      `\n${result.ambiguous.length} file(s) claimed equally by two modules. Make one pattern more specific, or give one a priority, in ${config.coverage}.`,
+    )
+    process.exit(1)
+  }
+
+  if (process.argv.includes('--check')) {
+    if (previous !== next) {
+      console.error(`${config.output} is stale. Run the architecture sync.`)
+      process.exit(1)
+    }
+    console.log('architecture — up to date')
+  } else if (previous !== next) {
+    writeFileSync(outPath, next)
+    console.log(`architecture — updated ${config.output}`)
+  } else {
+    console.log('architecture — no change')
+  }
+
+  if (result.unclaimed.length > 0) {
+    console.log(`\n${result.unclaimed.length} file(s) no module claims:`)
+    for (const file of result.unclaimed.slice(0, 40)) console.log(`  ${file}`)
+    if (result.unclaimed.length > 40) console.log(`  … and ${result.unclaimed.length - 40} more`)
+    console.log(`Give a module a wider pattern in ${config.coverage}, or add a node for it.`)
+  }
+}
+
+/*
+ * Only when run as a command. A test importing `measure` from here would
+ * otherwise rewrite the very file it is about to assert against — which is
+ * exactly how a stale-file check passes while being completely blind.
+ */
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main()

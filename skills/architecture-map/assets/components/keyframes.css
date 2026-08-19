@@ -1,0 +1,14 @@
+/* The one stylesheet the map needs: the dash march along the active flow edge.
+   -18px is one full dasharray period (10 8), so the loop is seamless.
+   Import once, anywhere the map is mounted. */
+@keyframes am-dash {
+  to {
+    stroke-dashoffset: -18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [style*="am-dash"] {
+    animation: none !important;
+  }
+}
