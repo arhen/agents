@@ -1,6 +1,6 @@
 ---
 name: answer
-description: For non-trivial replies; identify the task, verify assumptions, break into sub-steps then synthesize these into one precise answer.
+description: Use FIRST on every user request before any action — before reading, checking, searching, editing, writing, running commands, or planning todos. Parse what the user actually asked, verify assumptions against real state, break into sub-steps, then act and synthesize one precise answer. Skip only for pure greetings.
 ---
 
 # Answer
