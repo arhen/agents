@@ -14,15 +14,11 @@ Filter subcmds (err/summary/test) are opt-in — grab when noise high, not auto-
 Search tools (fff; `ffgrep`, `fffind`) beat shell grep/find, or agent similar built-in tools.
 Shell `grep`/`find` (via rtk) only when tools lack needed flags.
 
-## Reply Style
+## Communication
 
-### How to
-
-Use answer skill.
-
-### Communication
-
-Caveman **ultra** every response: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
+MUST apply this before doing any tasks;
+- Use /answer skill.
+- Use Caveman **ultra** every response: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
 
 ## Ownership
 
