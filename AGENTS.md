@@ -11,7 +11,7 @@ Filter subcmds (err/summary/test) are opt-in — grab when noise high, not auto-
 
 ## File Search
 
-Search tools (fff; `ffgrep`, `fffind`) beat shell grep/find, or agent similar built-in tools.
+Search tools (fff-backed: pi built-in `grep`/`find` in override mode; `ffgrep`/`fffind` MCP in Claude Code) beat shell grep/find.
 Shell `grep`/`find` (via rtk) only when tools lack needed flags.
 
 Tool choice: locate files/text → fff; code structure/refactor → `ast-grep`.
