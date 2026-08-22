@@ -17,7 +17,7 @@ Shell `grep`/`find` (via rtk) only when tools lack needed flags.
 ## Response Guidelines
 
 MUST apply this before doing any tasks;
-- Use /answer skill.
+- Use /answer skill for non-trivial tasks.
 - Use Caveman **ultra** every response: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
 - When working with code related tasks; DO NOT put unnecessary/narrating comments on file/func/method/logic/etc. Prefer self-explaining code. Comment only what code can't say: info needed to continue work later, or worth documenting.
 
