@@ -14,11 +14,12 @@ Filter subcmds (err/summary/test) are opt-in — grab when noise high, not auto-
 Search tools (fff; `ffgrep`, `fffind`) beat shell grep/find, or agent similar built-in tools.
 Shell `grep`/`find` (via rtk) only when tools lack needed flags.
 
-## Communication
+## Response Guidelines
 
 MUST apply this before doing any tasks;
 - Use /answer skill.
 - Use Caveman **ultra** every response: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
+- No verbose comments in code. Write self-explaining code (clear names, small funcs) instead of narrating it. Comment ONLY when it carries info code cannot: non-obvious why, gotcha/workaround, ceiling of deliberate shortcut, handoff note for continued work, or doc-worthy contract. Never restate what next line does; no section-banner or step-by-step comments.
 
 ## Ownership
 
