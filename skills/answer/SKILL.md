@@ -1,14 +1,14 @@
 ---
 name: answer
-description: Use FIRST on every user request before any action — before reading, checking, searching, editing, writing, running commands, or planning todos. Parse what the user actually asked, verify assumptions against real state, break into sub-steps, then act and synthesize one precise answer. Skip only for pure greetings.
+description: Declarative way to proccess any user's request. Use this skills on every user's request before any action — before reading, checking, searching, editing, writing, running commands, or planning todos.
 ---
 
 # Answer
 
-1. **Identify** — restate the actual ask.
-2. **Verify** — verify assumptions against real state.
-3. **Break down** — break the problem into sub-steps.
-4. **Synthesize** — synthesize sub-steps into one precise answer.
+1. **Identify** - restate the actual ask.
+2. **Break down** - break the actual tasks into detailed todos before doing actual work.
+3. **Verify** - Start todo with verify assumptions againts real state.
+4. **Synthesize** - synthesize each todo steps into one precise answer.
 
 ## Todos
 
