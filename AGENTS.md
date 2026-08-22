@@ -19,7 +19,7 @@ Shell `grep`/`find` (via rtk) only when tools lack needed flags.
 MUST apply this before doing any tasks;
 - Use /answer skill.
 - Use Caveman **ultra** every response: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
-- Code tasks: no narrating comments. Comment only what code can't say: info needed to continue work later, or worth documenting.
+- When working with code related tasks; stop unnecessary/narrating comments. Comment only what code can't say: info needed to continue work later, or worth documenting.
 
 ## Ownership
 
