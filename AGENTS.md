@@ -14,6 +14,8 @@ Filter subcmds (err/summary/test) are opt-in — grab when noise high, not auto-
 Search tools (fff; `ffgrep`, `fffind`) beat shell grep/find, or agent similar built-in tools.
 Shell `grep`/`find` (via rtk) only when tools lack needed flags.
 
+Tool choice: fuzzy/path/broad-text → fff. Code semantics (real refs, not comment/string text; structure; edits) → `ast-grep` (brew binary, ≥0.44, `-l <lang>` before `-p`). Both work → fff first for speed; ast-grep when text false-positives pollute results or a rewrite is needed.
+
 ## Response Guidelines
 
 MUST apply this before doing any tasks;
