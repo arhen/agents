@@ -19,7 +19,7 @@ Shell `grep`/`find` (via rtk) only when tools lack needed flags.
 MUST apply this before doing any tasks;
 - Use /answer skill.
 - Use Caveman **ultra** every response: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
-- No verbose comments in code. Let code speak; do not narrate it. Comment ONLY when it carries info code cannot: non-obvious why, gotcha/workaround, ceiling of deliberate shortcut, handoff note for continued work, or doc-worthy contract. Never restate what next line does; no section-banner or step-by-step comments. Follow existing comment style of the project.
+- No narrating comments. Comment only what code can't say: why, gotcha, shortcut ceiling, handoff note. Match project's comment style.
 
 ## Ownership
 
