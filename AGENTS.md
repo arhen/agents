@@ -39,7 +39,8 @@ MUST apply this before doing any tasks;
 Priority:
 1. Use model's built-in.
 2. Use harness tool: installed tool/plugin/mcp/extensions/connectors.
-3. If unavailable, do NOT web search — report back to user.
+3. Fallback: `web-search` skill — `node ~/.agents/skills/web-search/search.mjs "<query>" --purpose "<why>"`.
+4. If all unavailable, do NOT web search — report back to user.
 
 ## Pi Extension Release
 
