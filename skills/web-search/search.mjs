@@ -51,6 +51,8 @@ function usage() {
 	return `Usage:
   node search.mjs "<query>" [--purpose "<why>"] [--provider openai-codex|anthropic|kimi-coding|deepseek] [--model <id>] [--json]
 
+Default provider is the first authenticated of: kimi-coding, openai-codex, anthropic, deepseek.
+
 Examples:
   node search.mjs "latest python release" --purpose "update dependency notes"
   node search.mjs "HTTP/3 browser support 2026" --provider kimi-coding
@@ -106,7 +108,10 @@ function pickProvider(argProvider, settings, auth) {
 	if (forced) return forced;
 	const fromSettings = normalizeProvider(settings?.defaultProvider);
 	if (fromSettings) return fromSettings;
-	for (const candidate of ["openai-codex", "anthropic", "kimi-coding", "deepseek"]) {
+	// ponytail: kimi-coding first because openai-codex auth here is a ChatGPT account, whose models
+	// reject the chatgpt backend (HTTP 400) and pi-ai 0.85.1 exposes no getModels() to probe with.
+	// Upgrade path: discover providers/models from the pi catalog once that export exists.
+	for (const candidate of ["kimi-coding", "openai-codex", "anthropic", "deepseek"]) {
 		if (auth?.[candidate]) return candidate;
 	}
 	throw new Error("Could not determine provider. Pass --provider openai-codex|anthropic|kimi-coding|deepseek");
