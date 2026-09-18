@@ -37,11 +37,13 @@ MUST apply this before doing any tasks;
 ## Web Search
 
 Priority:
-1. Use model's built-in.
-2. Use harness tool: `mcp_web_search_exa` / `mcp_web_fetch_exa` (keyless Exa, `~/.pi/agent/mcp.json`) — purpose-built search, no key, returns cited results.
-3. Any other installed tool/plugin/mcp/extension/connector.
-4. Fallback: `web-search` skill — `node ~/.agents/skills/web-search/search.mjs "<query>" --purpose "<why>"` (defaults to kimi-coding/k3).
+1. Model's built-in search.
+2. Exa MCP (keyless) — check your tool list first: if `mcp_web_search_exa` / `mcp_web_fetch_exa` exist, use them. Search takes `query` + `objective` (describe the page you want, not keywords) + `numResults`; `mcp_web_fetch_exa` reads URLs as markdown, batch them. Registered by `pi-mcp-adapter` as server `exa` in `~/.pi/agent/mcp.json`; tools absent (fresh machine, no adapter) → skip to 3.
+3. Any other installed tool/plugin/mcp/extension/connector. `radius_web_search` only when Radius creds exist — otherwise it fails with a missing-key/402 error.
+4. Fallback: `web-search` skill — `node ~/.agents/skills/web-search/search.mjs "<query>" --purpose "<why>"` (defaults to first authenticated of kimi-coding → openai-codex → anthropic → deepseek; `--provider` overrides).
 5. If all unavailable, do NOT web search — report back to user.
+
+MCP setup/inspection: `mcp({ action: "install", url })`, `mcp()` for server status, `mcp({ search: "..." })` to find tools. Exa MCP is rate-limited but needs no key; for version/release claims search first, then fetch the top URL before quoting it.
 
 ## Pi Extension Release
 
