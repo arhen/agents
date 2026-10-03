@@ -18,6 +18,18 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 3. Code semantics — real refs, structure, or an edit → ast-grep (CLI).
 4. Identifier search: grep first; if comment/string false-positives pollute, redo with ast-grep.
 
+## Modifying Files
+
+Use the built-in **edit** tool for every change to an existing file. Use the built-in **write** tool for new files or full rewrites. This is the default — not a preference.
+
+Scripts and MCP are fallbacks, allowed ONLY when the edit tool cannot do the job:
+
+1. Language-based script (Python/Node/sed/awk) — bulk/mechanical changes (e.g. 1000+ replacements), generated or machine-owned files.
+2. ast-grep (CLI) — structural/AST-level edits (see File Tools Guidelines).
+3. Editing MCP server — only if installed and strictly required.
+
+Shell redirection (`cat >`, `echo >>`, `sed -i`, heredocs) is NOT a first-choice edit tool. It sits in the fallback tier, never the default.
+
 ## Response Guidelines
 
 MUST apply this before doing any tasks;
