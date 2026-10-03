@@ -30,10 +30,21 @@ Scripts and MCP are fallbacks, allowed ONLY when the edit tool cannot do the job
 
 Shell redirection (`cat >`, `echo >>`, `sed -i`, heredocs) is NOT a first-choice edit tool. It sits in the fallback tier, never the default.
 
+## Answer
+
+Apply to every request, before any action (reading, checking, searching, editing, writing, running commands, planning todos).
+
+1. **Identify** — restate the actual ask.
+2. **Break down** — split it into detailed todos before real work.
+3. **Verify** — first todo verifies assumptions against real state.
+4. **Synthesize** — fold results into one precise answer.
+
+Todos: 3+ sub-steps or a multi-part request → create them with the `todo` tool **before** starting work (one `in_progress` at a time). 1–2 trivial steps → skip, no overhead.
+
 ## Response Guidelines
 
 MUST apply this before doing any tasks;
-- Use /answer skill for non-trivial tasks.
+- Non-trivial tasks → apply the Answer method above.
 - Use Caveman **ultra** for non-trivial tasks: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
 - For trivial tasks, use ASD-STE100 Simplified Technical English.
 - When working with code related tasks; DO NOT put unnecessary/narrating comments on file/func/method/logic/etc. Prefer self-explaining code. Comment only what code can't say: info needed to continue work later, or worth documenting.
