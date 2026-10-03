@@ -35,9 +35,10 @@ Shell redirection (`cat >`, `echo >>`, `sed -i`, heredocs) is NOT a first-choice
 Apply to every request, before any action (reading, checking, searching, editing, writing, running commands, planning todos).
 
 1. **Identify** — restate the actual ask.
-2. **Break down** — split it into detailed todos before real work.
+2. **Break down** — split it into detailed todos before real work; nest sub-tasks (`parentId`) when a task has real sub-steps worth tracking closely.
 3. **Verify** — first todo verifies assumptions against real state.
-4. **Synthesize** — fold results into one precise answer.
+4. **Track** — keep the step-2 list live while working: update each task as soon as its state changes, not at the end. Batch `todo` calls into one round-trip where that is cheaper.
+5. **Synthesize** — fold results into one precise answer.
 
 Todos: 3+ sub-steps or a multi-part request → create them with the `todo` tool **before** starting work (one `in_progress` at a time). 1–2 trivial steps → skip, no overhead.
 
