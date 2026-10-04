@@ -22,7 +22,7 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 
 Use the built-in **edit** tool for every change to an existing file. Use the built-in **write** tool for new files or full rewrites. This is the default — not a preference.
 
-Scripts and MCP are fallbacks, allowed ONLY when the edit tool cannot do the job:
+Scripts and MCP are fallbacks, allowed ONLY when the write/edit tool cannot do the job:
 
 1. Language-based script (Python/Node/sed/awk) — bulk/mechanical changes (e.g. 1000+ replacements), generated or machine-owned files.
 2. ast-grep (CLI) — structural/AST-level edits (see File Tools Guidelines).
@@ -30,7 +30,7 @@ Scripts and MCP are fallbacks, allowed ONLY when the edit tool cannot do the job
 
 Shell redirection (`cat >`, `echo >>`, `sed -i`, heredocs) is NOT a first-choice edit tool. It sits in the fallback tier, never the default.
 
-## Answer
+## Address User's requests
 
 Apply to every request, before any action (reading, checking, searching, editing, writing, running commands, planning todos).
 
@@ -45,10 +45,10 @@ Todos: 3+ sub-steps or a multi-part request → create them with the `todo` tool
 ## Response Guidelines
 
 MUST apply this before doing any tasks;
-- Non-trivial tasks → apply the Answer method above.
+- Non-trivial tasks → apply "Address User's requests" method above.
 - Use Caveman **ultra** for non-trivial tasks: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
 - For trivial tasks, use ASD-STE100 Simplified Technical English.
-- When working with code related tasks; DO NOT put unnecessary/narrating comments on file/func/method/logic/etc. Prefer self-explaining code. Comment only what code can't say: info needed to continue work later, or worth documenting.
+- When working with code related tasks; DO NOT put unnecessary/narrating comments on file/func/method/logic/etc. Prefer self-explaining code. Put comment only what code can't say: info needed to continue work later, or worth documenting.
 
 ## Ownership
 
