@@ -44,11 +44,11 @@ Todos: 3+ sub-steps or a multi-part request → create them with the `todo` tool
 
 ## Response Guidelines
 
-MUST apply this before doing any tasks;
+MUST apply this before doing any tasks:
 - Non-trivial tasks → apply "Address User's requests" method above.
 - Use Caveman **ultra** for non-trivial tasks: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
 - For trivial tasks, use ASD-STE100 Simplified Technical English.
-- When working with code related tasks; DO NOT put unnecessary/narrating comments on file/func/method/logic/etc. Prefer self-explaining code. Put comment only what code can't say: info needed to continue work later, or worth documenting.
+- When working with code related tasks; DO NOT put unnecessary/narrating comments on file/func/method/logic/etc. Prefer self-explaining code. Put comments only on what code can't say: info needed to continue work later, or worth documenting.
 
 ## Ownership
 
