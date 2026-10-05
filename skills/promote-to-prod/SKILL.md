@@ -393,4 +393,76 @@ the document under the wrong owner.
 To restyle an existing note, use `docs +update --mode overwrite` with `--new-title`
 rather than creating a second document.
 
-Report the URL and stop.
+Report the URL. If Step 9 is declined, stop here.
+
+## Step 9 — Offer a release video (optional)
+
+After the Lark note exists, offer a ~1-minute video for it. **Offer, do not assume.**
+It is a separate, slower job (hours, real AI spend), so say that when offering. Ask in
+one question: go/no-go, voice (warm calm male is the default), music on/off.
+
+### Hard rules
+
+- **Show the real product.** Screen-record the actual release build. Coded or animated
+  recreations of the UI were rejected — they drift from the real product and read as fake.
+  Remotion (or similar) is for title cards, captions, framing and assembly ONLY.
+- **Same claims as the note.** A scene may show only what the Lark note says is live
+  (Step 8 flag cross-check). Off-flag features appear as "coming soon" text, never as UI.
+- **Never record production.** Run the release refs locally on separate ports
+  (`git worktree` per service at the pushed prod SHAs, own deps, release migrations
+  applied) so the user's dev servers and data stay untouched. Back up the local DB first
+  (`pg_dump -Fc`).
+- **Production-equivalent flags, zero analytics.** Match live flag values; block PostHog
+  capture/recording/surveys and Sentry per tab (CDP `Network.setBlockedURLs`).
+- **Privacy.** A dedicated local workspace + brand with seeded, invented data. No real
+  customers, other brands, internal chats or meetings in frame. Live integrations that
+  read real accounts (Lark calendar on Home, etc.) must be cut off for the release API
+  (point their base URL at a dead port) or primed with seed data.
+- **Ask before uploads go to a shared bucket.** Local API uploads may land in the same S3
+  bucket as staging/production. Log every key created in a manifest.
+- **Secrets via files.** ElevenLabs key in `~/.config/elevenlabs.key` (mode 600), never in
+  chat, commands or commits. A key *ID* is not the key (`api_key_id_used_as_api_key`).
+
+### Seed rich, real data first
+
+Every scene needs believable content before recording, created through the real API/UI
+where possible: brand profile (logo, DNA, palette, type), a project, a multi-chapter
+story, real AI-generated artboards, a mixed proposal PDF for scorecards, a full week of
+tasks and events dated relative to the take day. Give the local workspace a plan and
+credits or every AI feature is blocked. Record every created row, S3 key, changed
+setting and cache key in `seed-manifest.json` — cleanup deletes exactly that list.
+
+### Recording
+
+- 1920x1080, continuous CDP `Page.startScreencast` from a second process (≈60-90 fps
+  JPEG frames + timestamps), a visible injected cursor with click ripples, the Next.js dev
+  indicator hidden. The tab must be **visible and focused** (`Emulation.setFocusEmulationEnabled`)
+  or input and frames stall.
+- **Type live at human pace** (60-90 ms/char with jitter, pauses at punctuation). Never
+  paste. Select-all is `Input.dispatchKeyEvent` with `modifiers=4` + `commands:["selectAll"]`;
+  a `"Meta+a"` key string silently does nothing and leaves prefilled text in the field.
+- Leave the typed part of each scene empty before its take; rehearse once, then record.
+- Logged-out views (client approval links) go in an isolated browser context.
+- If the take must read as "morning", shift only the read endpoints that render the day
+  and the browser `Date` (Proxy, injected before page scripts). Never shift the clock for
+  writes, uploads or AI runs — S3 presigned URLs fail and JWT `iat` checks reject tokens.
+
+### Edit
+
+- Convert takes to constant 30 fps clips; time-lapse AI waits; mark beats while recording.
+- Voice-over: one ElevenLabs clip per scene with timestamps. **Place each VO at the top
+  level, sized to its own length** — nesting it inside a scene Sequence cuts it off at the
+  scene's end. When one line spans two scenes, cut on the gap between its sentences using
+  the character alignment.
+- Music bed ducked well under the voice; loudness-normalise the master to about -16 LUFS.
+- Verify before publishing: render VO-only and cross-correlate each line against its
+  source (whole clip and last 0.5 s must match); decode the whole file with no errors;
+  review one frame per second for privacy.
+
+### Publish and clean up
+
+Insert into the Lark note as an inline player (`docs +media-insert --type file
+--file-view preview`, relative path, before the first section). To replace a video,
+insert the new one, then delete the old block by its root-child index and re-fetch the
+doc. Give the user the local file path. Clean up from the manifest only after the user
+approves the video, and remind them to rotate any key pasted in chat.
