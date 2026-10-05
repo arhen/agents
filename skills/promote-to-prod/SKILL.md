@@ -8,12 +8,27 @@ description: Promote the integration branch of each frndOS service to its produc
 Promotes all five frndOS repositories as one coordinated release, resolves
 prod-first hotfix drift, and produces a deploy-notes document.
 
-**Never push production or deploy without explicit confirmation.** Merge locally,
-report, ask. Treat production pushes as deployment-capable; verify each repo's
-actual production delivery path rather than assuming its checked-in CI covers it.
-The transformer is PR-only: never push directly to its `development` or `main`,
-and never merge your own PR. Prepare its promotion PR for the owner; newly merged `main` code is used
-on the next production Prefect run, with no separate build/deploy step.
+## Approval and publishing authority
+
+A direct user invocation of **`/promote-to-prod`**, or an explicit instruction to
+execute the production promotion, is the user's approval for the requested
+application production pushes once verification passes. Record the requested
+repos/targets and approval in the release notes; **do not ask for the same push
+approval again**. An agent merely loading this skill, a question about promotion,
+or a dry-run/audit/notes-only request does not authorize production writes.
+
+Treat production pushes as deployment-capable; verify each repo's actual delivery
+path rather than assuming its checked-in CI covers it. Keep all prechecks and
+source/target freshness checks. Expanded scope or unresolved decisions still
+need user input; invocation is not approval for arbitrary configuration changes,
+Cloud writes, migrations, destructive operations or force-pushes.
+
+Push approval does not override repository publishing restrictions. The
+transformer is PR-only: never push directly to its `development` or `main`, and
+never merge your own PR. Prepare its promotion PR for the owner. Newly merged
+`main` code is used on the next production Prefect run, with no separate build
+step. Do not remove that gate by changing this skill; current workspace/repo
+instructions still require it.
 
 ## Branch map
 
@@ -266,7 +281,7 @@ php artisan config:cache && php artisan route:cache
 php artisan queue:restart      # new jobs won't run on stale workers
 ```
 
-## Step 6 — Report and stop
+## Step 6 — Report and publish the approved scope
 
 Report: per-service merge result, how each conflict was resolved and what proves it,
 then the notes (flags → envs → packages → migrations → commands → order), then the
@@ -285,9 +300,11 @@ until its deployment and health are separately verified. An orchestration merge
 has no build job: verify its source ref and, with operator authorization, a real
 sync rather than interpreting absent deployment CI as success.
 
-Ask before production pushes unless the user already explicitly approved the
-reviewed scope. Pipeline owner merge and unresolved prechecks remain required;
-never treat application push approval as permission to bypass pipeline PR rules.
+With the invocation/instruction approval recorded above, proceed with allowed
+application production pushes after verification without a redundant approval
+question. Without that approval, report and ask before pushing. Pipeline owner
+merge and unresolved prechecks remain required; invocation never bypasses the
+transformer's PR-only publishing rules.
 
 ## Step 7 — Close the drift
 
