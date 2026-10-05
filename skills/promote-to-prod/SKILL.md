@@ -9,9 +9,10 @@ Promotes all five frndOS repositories as one coordinated release, resolves
 prod-first hotfix drift, and produces a deploy-notes document.
 
 **Never push production or deploy without explicit confirmation.** Merge locally,
-report, ask. Application production pushes trigger deployment. The transformer is
-PR-only: never push directly to its `development` or `main`, and never merge your
-own PR. Prepare its promotion PR for the owner; newly merged `main` code is used
+report, ask. Treat production pushes as deployment-capable; verify each repo's
+actual production delivery path rather than assuming its checked-in CI covers it.
+The transformer is PR-only: never push directly to its `development` or `main`,
+and never merge your own PR. Prepare its promotion PR for the owner; newly merged `main` code is used
 on the next production Prefect run, with no separate build/deploy step.
 
 ## Branch map
