@@ -73,6 +73,6 @@ MCP setup/inspection: `mcp({ action: "install", url })`, `mcp()` for server stat
 
 Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extensions), one dir per package under `packages/`. Naming tells type: `pi-core-*` (core set), `pi-add-*` (add-ons), `pi-toolset` (manager).
 
-Release cycle per package: edit source in monorepo → commit+push → `npm version patch && npm publish` from its dir → `pi update npm:@arhen/<pkg>`.
+Release cycle: edit source in monorepo → commit (clean tree) → `npm run release -- [--minor|--major] <pkg>...` from repo root. Script runs the package `check`, bumps, publishes, commits + tags `<pkg>@<version>`, pushes, then `pi update npm:@arhen/<pkg>`. `--dry-run` = check + `npm publish --dry-run` only.
 
-**Family rule:** bump any `pi-core-*` → also bump `pi-toolset` patch (same cycle) — keeps installed core/toolset versions consistent.
+Packages version independently. `pi-toolset` discovers the family from npm at runtime → release it only when its own script changes.
