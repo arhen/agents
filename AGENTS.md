@@ -17,6 +17,7 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 2. Any text content (docs, logs, configs, code) → grep.
 3. Code semantics — real refs, structure, or an edit → ast-grep (CLI).
 4. Identifier search: grep first; if comment/string false-positives pollute, redo with ast-grep.
+5. Batching several commands or reading/filtering their output: use the `codemode` tool when available, not ad-hoc Python/Node helper scripts.
 
 ## Modifying Files
 
