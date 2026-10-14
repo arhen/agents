@@ -1,6 +1,6 @@
 ---
 name: promote-to-prod
-description: Promote the integration branch of each frndOS service to its production branch — merge, resolve conflicts against the prod-first hotfix drift, verify, and produce the pre-deploy notes (envs, packages, migrations, feature flags, commands, order). Use when the user says "promote to prod", "promote develop/development to production", "ship to prod", or "release".
+description: Promote and deploy frndOS to production — review merges and migrations, start the web build early, run guarded ClickHouse schema-sync and API/AI deployments, track automatic data CI and Amplify through AWS CLI, verify health, and write deploy notes. Use when the user says "promote to prod", "ship to prod", or "release".
 ---
 
 # Promote to Production
@@ -12,16 +12,22 @@ prod-first hotfix drift, and produces a deploy-notes document.
 
 A direct user invocation of **`/promote-to-prod`**, or an explicit instruction to
 execute the production promotion, is the user's approval for the requested
-application production pushes once verification passes. Record the requested
-repos/targets and approval in the release notes; **do not ask for the same push
-approval again**. An agent merely loading this skill, a question about promotion,
-or a dry-run/audit/notes-only request does not authorize production writes.
+application production pushes and the routine deployment operations documented in
+[the deployment runbook](references/deployment-runbook.md), once verification passes:
+API `sudo frndos-deploy`, AI fast-forward pull plus production Supervisor restart,
+and one existing guarded production `schema-sync/schema-sync` apply when the marts
+are behind the approved release. This operational scope was explicitly requested
+by the owner on 2026-10-14. Record requested repos, targets, migration impact and
+authority in the release notes; **do not ask for the same routine approval again**.
+Loading this skill, a question about promotion, or a dry-run/audit/notes-only request
+does not authorize production writes. More restrictive workspace/repo instructions
+still win; obtain any separately required operation approval rather than bypassing it.
 
-Treat production pushes as deployment-capable; verify each repo's actual delivery
-path rather than assuming its checked-in CI covers it. Keep all prechecks and
-source/target freshness checks. Expanded scope or unresolved decisions still
-need user input; invocation is not approval for arbitrary configuration changes,
-Cloud writes, migrations, destructive operations or force-pushes.
+Treat pushes as deployment-capable; verify actual delivery paths, prechecks and
+source/target freshness. Expanded scope, missing access and unresolved migration
+risks still need user input. Routine deployment approval is not approval for ad-hoc
+Cloud DDL/DML, stamping, backfills, arbitrary Artisan commands, connector changes,
+block/profile edits, deployment registration, configuration changes or force-pushes.
 
 Push approval does not override repository publishing restrictions. The
 transformer is PR-only: never push directly to its `development` or `main`, and
@@ -66,6 +72,30 @@ Fivetran raw data → frnd-orchestration → ClickHouse marts → data-service �
 api promotes from **`staging`, not `develop`** — staging is a superset of develop
 (verify with `git rev-list --left-right --count origin/staging...origin/develop`;
 the develop-only side should be 0). If it isn't, stop and ask.
+
+## Step 0 — Readiness gate (before release work)
+
+Read [the deployment runbook](references/deployment-runbook.md) fully and perform its
+read-only preflight **before trial merges, release pushes or deployments**. Verify:
+
+- AWS CLI session with STS; correct account/region, Amplify app/repository/domain,
+  production branch and usable job-status access.
+- Actual SSH connectivity to **all three** machines (vm-ext, vm-stg, vm-prod), not
+  merely an enabled Herdr entry; correct identities, paths, branches, commands and
+  noninteractive permissions for the requested deployment operations.
+- Shared Prefect authentication, existing production deployment identity/pull/env,
+  worker/queue readiness and migration concurrency limit; data-service Deploy
+  workflow and runner access/availability.
+- Actual staging/production ClickHouse lineage/metadata access, using bounded
+  read retries when idle clusters wake. Record any API migration/env/scheduler
+  prerequisites that the candidate review must resolve.
+
+**Fail closed on missing access/readiness.** Request login or an operator decision
+now, then re-run the failed checks; do not start Amplify and discover later that AWS
+login or a backend machine is inaccessible. Publish only after all remaining
+candidate-specific flag/config/migration gates also pass. A preflight never pulls
+code, restarts a service, applies DDL, creates a flow or registers deployments.
+Record results/time in release notes and recheck freshness before each write.
 
 ## Why this is not just `git merge`
 
@@ -257,8 +287,13 @@ Production deployments normally pull `main`; staging deployments pull
 and the deployment IDs used by the data-service candidate. Branch alone does not
 select the ClickHouse cluster. Preserve existing deployment names and IDs,
 especially `platform-pipeline/webhook-sync` and `connector-cleanup/webhook-delete`.
-Do not re-register deployments, edit blocks, change the active Prefect profile,
-or trigger production/backfill flows as a promotion side effect.
+Do not re-register deployments, edit blocks or change the active Prefect profile.
+The only routine flow operation authorized by a production invocation is the verified
+existing `schema-sync/schema-sync` apply described in the runbook, with the approved
+required revision. Other production, ingestion and backfill flows need separate approval.
+A timed-out metadata read may be ClickHouse waking from idle; retry reads with bounded
+backoff. A failed or timed-out migration run is different: inspect its existing run ID,
+stop on refusal/partial failure, and never create another run blindly.
 
 Record required production checks as gates, not future assumptions. Where an
 operator runs migrations, verify the resulting schema/recorded lineage before
@@ -273,13 +308,16 @@ git -C api diff origin/$PROD origin/$DEV -- bootstrap/app.php routes/console.php
 git -C api diff --name-only --diff-filter=A origin/$PROD origin/$DEV -- app/Console/Commands
 ```
 
-### Standard command set (api)
+### Production API deployment
 
-```bash
-php artisan migrate --force
-php artisan config:cache && php artisan route:cache
-php artisan queue:restart      # new jobs won't run on stale workers
-```
+On `vm-prod`, from `/var/www/frndos.com/api`, use **`sudo frndos-deploy`** after the
+migration/preflight review. The installed wrapper pulls fast-forward, installs
+Composer deps, runs migrations and in-place cache rebuilds as `www-data`, then
+restarts queues gracefully. Do not replace it with root-run Artisan commands,
+`optimize:clear`, or an unnecessary PHP-FPM restart. For separately approved custom
+commands: `sudo -u www-data -H php artisan <command>` from that directory.
+
+Read [the deployment runbook](references/deployment-runbook.md) before any deployment.
 
 ## Step 6 — Report and publish the approved scope
 
@@ -287,12 +325,24 @@ Report: per-service merge result, how each conflict was resolved and what proves
 then the notes (flags → envs → packages → migrations → commands → order), then the
 drift left to backport.
 
-**Default dependency order:** explicit flag/config decisions → transformer
-promotion PR owner merge and migration/runtime readiness → ai-service →
-data-service (activation/consumer) → api (PostgreSQL migrations, cache refresh,
-queue restart) → web. Readiness, not push timing, determines when the next stage
-can proceed. "All together" means one coordinated release, not five simultaneous
-pushes into asynchronous deployments.
+**Default execution: overlap the web build with backend work.** After all release
+prechecks, access checks, flag/config decisions and transformer owner-publication
+gates pass, start the approved web production build first and capture its exact
+Amplify job. While it builds, complete guarded ClickHouse readiness → AI deployment
+→ automatic data-service CI → API deployment. Poll Amplify via AWS CLI throughout;
+finish only when that job and every backend readiness/health check pass.
+
+Web builds often take about ten minutes; that is an estimate, **not a deployment
+barrier**. Verify the candidate can safely coexist with current backends or is
+protected by already-approved rollout gates before early publication. If a live
+UI/contract change cannot coexist, keep web last or use an existing build-only/
+activation barrier; do not invent an unsupported Amplify pause. If backend work
+fails, stop/hold this release's in-flight web job where supported and authorized;
+never stop another release's job or silently roll back a deployed site. Readiness,
+not elapsed time or push timing, determines when the coordinated release is done.
+
+The runbook contains machine discovery, exact commands, ClickHouse cold-start
+handling, data CI and AWS Amplify job verification. Read it fully before publishing.
 
 A repo whose merged tree is identical to production needs no code deployment;
 still check schema/config readiness. Do not mark a pushed commit as deployed
