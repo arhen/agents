@@ -18,6 +18,7 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 3. Code semantics — real refs, structure, or an edit → ast-grep (CLI).
 4. Identifier search: grep first; if comment/string false-positives pollute, redo with ast-grep.
 5. Batching several commands or reading/filtering their output: use the `codemode` tool when available, not ad-hoc Python/Node helper scripts.
+6. Always work through `codemode` when it is available (owner, 2026-10-14; every task and session): run tool calls inside codemode scripts — batch independent calls with `Promise.allSettled`, chain dependent ones, filter output in the script, and show images with `image()` (more reliable than `read` on fresh screenshots). Call a tool directly only when codemode is unavailable or fails.
 
 ## Modifying Files
 
