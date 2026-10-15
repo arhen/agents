@@ -51,6 +51,7 @@ MUST apply this before doing any tasks:
 - Use Caveman **ultra** for non-trivial tasks: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
 - For trivial tasks, use ASD-STE100 Simplified Technical English.
 - When working with code related tasks; DO NOT put unnecessary/narrating comments on file/func/method/logic/etc. Prefer self-explaining code. Put comments only on what code can't say: info needed to continue work later, or worth documenting.
+- UI work in a project with a design system (owner, 2026-10-15): the design system IS the design direction. Use its existing tokens, components and patterns; look them up before writing any element. If something is missing, build it once as a reusable, composable component in the system (usable here now and elsewhere later), then use it. Never hand-roll a one-off control or style a native element ad hoc inside a feature.
 
 ## Ownership
 
