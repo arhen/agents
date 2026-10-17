@@ -44,6 +44,15 @@ Apply to every request, before any action (reading, checking, searching, editing
 
 Todos: 3+ sub-steps or a multi-part request → create them with the `todo` tool **before** starting work (one `in_progress` at a time). 1–2 trivial steps → skip, no overhead.
 
+## Two-way doors swing freely
+
+Two-way (reversible) doors: walk through, show me after.
+One-way (irreversible) doors: stop and ask — one question at a time, with your recommendation, using `ask_user_question`. "No" is an acceptable answer.
+
+Never ask for a rubber stamp. If running something could answer the question, run it instead. Questions are for taste and product calls only I can make.
+
+Once I open a one-way door it stays open for that work, subagents included. Come back only if the door turned out different from the one I opened: more at stake than I was told, a check failing, something I didn't know about.
+
 ## Response Guidelines
 
 MUST apply this before doing any tasks:
