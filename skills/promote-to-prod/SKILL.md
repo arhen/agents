@@ -1,6 +1,6 @@
 ---
 name: promote-to-prod
-description: Promote and deploy frndOS to production — review merges and migrations, start the web build early, run guarded ClickHouse schema-sync and API/AI deployments, track automatic data CI and Amplify through AWS CLI, verify health, and write deploy notes. Use when the user says "promote to prod", "ship to prod", or "release".
+description: Promote and deploy frndOS to production — review merges and migrations, start the web build early, run guarded ClickHouse schema-sync and API/AI deployments, track automatic data CI and Amplify through AWS CLI, verify health, and write deploy notes. Use when the user says "promote to prod", "ship to prod", or "release". Bare invocation stops at the report; production writes wait for an explicit "deploy".
 ---
 
 # Promote to Production
@@ -10,8 +10,26 @@ prod-first hotfix drift, and produces a deploy-notes document.
 
 ## Approval and publishing authority
 
-A direct user invocation of **`/promote-to-prod`**, or an explicit instruction to
-execute the production promotion, is the user's approval for the requested
+### Report gate — wait for "deploy" (owner, 2026-10-18)
+
+A bare **"promote to prod"** / `/promote-to-prod` (also "ship to prod", "release")
+means **prepare and report only**: run Steps 0–5 (readiness gate, fetch, trial
+merges, classification, deploy notes), present the Step 6 report, then **stop**.
+No production pushes, no transformer PR, no flag creation, no `frndos-deploy`, no AI
+pull/restart, no schema-sync apply, no Amplify trigger. The owner reads the report
+first. Proceed to publishing only after the owner explicitly says **deploy** (or an
+equivalent clear go, e.g. "go ahead and deploy") in a later message.
+
+Skip the wait only when the **first** request already asks for both, e.g.
+"promote to prod and deploy" / "promote and deploy". Then still present the report,
+and proceed without a second confirmation once all gates pass.
+
+An instruction mid-run to hold ("don't deploy yet", "let me read first") always
+wins over an earlier deploy request.
+
+### Scope of a deploy go
+
+Once the deploy go above exists, it is the user's approval for the requested
 application production pushes and the routine deployment operations documented in
 [the deployment runbook](references/deployment-runbook.md), once verification passes:
 API `sudo frndos-deploy`, AI fast-forward pull plus production Supervisor restart,
@@ -350,9 +368,12 @@ until its deployment and health are separately verified. An orchestration merge
 has no build job: verify its source ref and, with operator authorization, a real
 sync rather than interpreting absent deployment CI as success.
 
-With the invocation/instruction approval recorded above, proceed with allowed
-application production pushes after verification without a redundant approval
-question. Without that approval, report and ask before pushing. Pipeline owner
+**Stop here after the report unless a deploy go exists** (see
+[Report gate](#report-gate--wait-for-deploy-owner-2026-10-18)). Bare "promote to
+prod" ends at the report: end the turn with a short line telling the owner to say
+**deploy** when ready. With a deploy go (later "deploy" message, or a first request
+that said "promote … and deploy"), proceed with allowed application production
+pushes after verification without a redundant approval question. Pipeline owner
 merge and unresolved prechecks remain required; invocation never bypasses the
 transformer's PR-only publishing rules.
 

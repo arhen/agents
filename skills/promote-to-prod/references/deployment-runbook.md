@@ -1,6 +1,6 @@
 # frndOS production deployment runbook
 
-Read fully before production writes. A direct production promotion invocation authorizes only the routine operations enumerated by SKILL.md, after review and prechecks. Repository restrictions, transformer owner-publication gates, migration guards and required separate approvals remain binding.
+Read fully before production writes. A bare "promote to prod" authorizes only preparation and the report; production writes need the owner's explicit **deploy** go (a later "deploy" message, or a first request that said "promote … and deploy") — see SKILL.md "Report gate". A deploy go authorizes only the routine operations enumerated by SKILL.md, after review and prechecks. Repository restrictions, transformer owner-publication gates, migration guards and required separate approvals remain binding.
 
 ## 1. Mandatory early readiness gate
 
