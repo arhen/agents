@@ -58,10 +58,11 @@ function usage() {
 	return `Usage:
   node search.mjs "<query>" [--purpose "<why>"] [--provider openai-codex|anthropic|kimi-coding|deepseek] [--model <id>] [--only] [--json]
 
-Provider order: --provider first, then settings.json defaultProvider, then the first authenticated of
-kimi-coding, openai-codex, anthropic, deepseek. A provider that is unusable (bad credentials, no quota,
-no model access) falls through to the next one; the attempt summary goes to stderr. --only keeps the
-first candidate on that list and fails loud instead of falling through.
+Provider order: --provider first, then the providers this machine is active on — PI_PROVIDER (the model
+running the session), settings.json defaultProvider, then every provider named by an enabledModels
+pattern, in the order enabled. The first authenticated of kimi-coding, openai-codex, anthropic, deepseek
+follows. A provider that is unusable (bad credentials, no quota, no model access) falls through to the
+next one; the attempt summary goes to stderr. --only keeps the first candidate and fails loud instead.
 
 Examples:
   node search.mjs "latest python release" --purpose "update dependency notes"
@@ -121,18 +122,35 @@ function hasCredentials(provider, auth) {
 	return Boolean(auth?.[provider] || process.env[apiKeyEnvVar(provider)]);
 }
 
-// Ordered list: --provider first, then settings.defaultProvider, then the documented order, filtered to
-// providers that can even authenticate. Unusable ones (403 subscription, 402 balance, 400 model) are
+// Providers this machine actually reaches for, best signal first: the model you are running right now
+// (PI_PROVIDER, injected into pi's shell commands), then settings.json defaultProvider, then every
+// provider named by an enabledModels pattern ("openai-codex/gpt-6-luna" -> openai-codex) in the order
+// you enabled them. Aliases and non-search providers (routers, opencode-go, ...) normalize to nothing.
+function activeProviders(settings) {
+	const providers = [];
+	const add = (raw) => {
+		const provider = normalizeProvider(raw);
+		if (provider && !providers.includes(provider)) providers.push(provider);
+	};
+	add(process.env.PI_PROVIDER);
+	add(settings?.defaultProvider);
+	for (const pattern of Array.isArray(settings?.enabledModels) ? settings.enabledModels : []) add(String(pattern).split("/")[0]);
+	return providers;
+}
+
+// Ordered list: --provider first, then the active providers above, then the documented order, filtered
+// to providers that can even authenticate. Unusable ones (403 subscription, 402 balance, 400 model) are
 // skipped at request time, not here, so the attempt summary can report why.
 function providerOrder(argProvider, settings, auth) {
-	const requested = [normalizeProvider(argProvider), normalizeProvider(settings?.defaultProvider)].filter(Boolean);
+	const explicit = normalizeProvider(argProvider);
 	const order = [];
 	const add = (provider) => {
 		if (provider && !order.includes(provider)) order.push(provider);
 	};
-	for (const provider of requested) add(provider);
+	add(explicit);
+	for (const provider of activeProviders(settings)) add(provider);
 	for (const provider of KNOWN_PROVIDERS) add(provider);
-	return order.filter((provider) => requested.includes(provider) || hasCredentials(provider, auth));
+	return order.filter((provider) => provider === explicit || hasCredentials(provider, auth));
 }
 
 function errorStatus(err) {

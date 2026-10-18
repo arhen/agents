@@ -25,7 +25,7 @@ node search.mjs "who won the 2026 election" --provider deepseek --only
 
 Optional flags:
 
-- `--provider openai-codex|anthropic|kimi-coding|deepseek` (default: current pi provider, else first available credential)
+- `--provider openai-codex|anthropic|kimi-coding|deepseek` (default: the active provider, then the enabled catalog, then the first authenticated credential)
 - `--model <model-id>`
 - `--only` — keep the first provider in the order and fail loud instead of falling through
 - `--timeout <ms>`
@@ -40,7 +40,17 @@ Optional flags:
 | `kimi-coding` | api.kimi.com/coding (anthropic-messages) + `web_search_20250305` | `kimi-coding` key in auth.json |
 | `deepseek` | api.deepseek.com Search API, else `web_search_20250305` | `deepseek` key in auth.json or `DEEPSEEK_API_KEY` env |
 
-A provider that is unusable (bad credentials, no quota, no model access) falls through to the next authenticated one; the attempt summary goes to stderr, so `Provider:` / `Model:` on stdout always name the provider that answered.
+A provider that is unusable (bad credentials, no quota, no model access) falls through to the next in the order; the attempt summary goes to stderr, so `Provider:` / `Model:` on stdout always name the provider that answered.
+
+## Provider order
+
+Without `--provider`, the script prefers what this machine is actually running:
+
+1. `PI_PROVIDER` — the provider of the model running the pi session (pi injects it into shell commands), falling back to `settings.json` `defaultProvider`.
+2. Providers named by `settings.json` `enabledModels` patterns (`openai-codex/gpt-6-luna` → `openai-codex`), in the order they are enabled — the models active in the catalog and available for cycling.
+3. The first authenticated of `kimi-coding`, `openai-codex`, `anthropic`, `deepseek`.
+
+Non-search providers (routers, `opencode-go`, …) normalize away, so a session running one of them falls to the next signal — `PI_PROVIDER=opencode-go` with `enabledModels: ["openai-codex/gpt-6-luna", "kimi-coding/k3"]` orders the run `openai-codex`, `kimi-coding`, `deepseek`. Switch models mid-session and the next search follows.
 
 ## DeepSeek
 
