@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync, writeFileSync, realpathSync } from "fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync, realpathSync } from "fs";
 import { spawnSync, execSync } from "child_process";
 import { homedir } from "os";
 import { dirname, isAbsolute, join, resolve } from "path";
@@ -9,22 +9,28 @@ import { fileURLToPath, pathToFileURL } from "url";
 const MESSAGES_PROVIDERS = {
 	anthropic: { baseUrl: "https://api.anthropic.com", auth: "auto" },
 	"kimi-coding": { baseUrl: "https://api.kimi.com/coding", auth: "bearer" },
-	deepseek: { baseUrl: "https://api.deepseek.com/anthropic", auth: "bearer" },
+	deepseek: { baseUrl: "https://api.deepseek.com/anthropic", apiBase: "https://api.deepseek.com", auth: "bearer" },
 };
 
+// Preference order only; the pi-ai catalog supplies baseUrl/api. openai-codex prefers models a
+// ChatGPT-account Codex accepts: gpt-5.3-codex-spark and gpt-5.4-mini both answer HTTP 400 there,
+// so they sit last as last-resort probes for API-key accounts.
 const PREFERRED_MODELS = {
-	"openai-codex": ["gpt-5.4-mini", "gpt-5.3-codex-spark", "gpt-5.1", "gpt-5.1-codex-mini"],
+	"openai-codex": ["gpt-6-luna", "gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.5", "gpt-6-sol", "gpt-6.1-sol", "gpt-5.6-sol", "gpt-6-astra", "gpt-5.3-codex-spark", "gpt-5.4-mini"],
 	anthropic: ["claude-haiku-4-5", "claude-3-5-haiku-latest", "claude-3-5-haiku-20241022"],
 	"kimi-coding": ["k3", "kimi-for-coding-highspeed", "kimi-for-coding"],
-	deepseek: ["deepseek-v4-flash", "deepseek-v4-pro"],
+	deepseek: ["deepseek-flash", "deepseek-v4-pro"],
 };
 
 const FALLBACK_MODELS = {
-	"openai-codex": { id: "gpt-5.4-mini", baseUrl: "https://chatgpt.com/backend-api" },
+	"openai-codex": { id: "gpt-6-luna", baseUrl: "https://chatgpt.com/backend-api" },
 	anthropic: { id: "claude-haiku-4-5" },
 	"kimi-coding": { id: "k3" },
-	deepseek: { id: "deepseek-v4-flash" },
+	deepseek: { id: "deepseek-flash" },
 };
+
+const KNOWN_PROVIDERS = ["kimi-coding", "openai-codex", "anthropic", "deepseek"];
+const MAX_MODEL_ATTEMPTS = 3;
 
 function parseArgs(argv) {
 	const out = { provider: undefined, model: undefined, purpose: "general research support", timeoutMs: 120000, json: false, help: false, query: "" };
@@ -33,6 +39,7 @@ function parseArgs(argv) {
 		const arg = argv[i];
 		if (arg === "--help" || arg === "-h") out.help = true;
 		else if (arg === "--json") out.json = true;
+		else if (arg === "--only") out.only = true;
 		else if (arg === "--provider") out.provider = argv[++i];
 		else if (arg.startsWith("--provider=")) out.provider = arg.slice("--provider=".length);
 		else if (arg === "--model") out.model = argv[++i];
@@ -49,14 +56,17 @@ function parseArgs(argv) {
 
 function usage() {
 	return `Usage:
-  node search.mjs "<query>" [--purpose "<why>"] [--provider openai-codex|anthropic|kimi-coding|deepseek] [--model <id>] [--json]
+  node search.mjs "<query>" [--purpose "<why>"] [--provider openai-codex|anthropic|kimi-coding|deepseek] [--model <id>] [--only] [--json]
 
-Default provider is the first authenticated of: kimi-coding, openai-codex, anthropic, deepseek.
+Provider order: --provider first, then settings.json defaultProvider, then the first authenticated of
+kimi-coding, openai-codex, anthropic, deepseek. A provider that is unusable (bad credentials, no quota,
+no model access) falls through to the next one; the attempt summary goes to stderr. --only keeps the
+first candidate on that list and fails loud instead of falling through.
 
 Examples:
   node search.mjs "latest python release" --purpose "update dependency notes"
   node search.mjs "HTTP/3 browser support 2026" --provider kimi-coding
-  node search.mjs "vite 7 breaking changes" --json`;
+  node search.mjs "vite 7 breaking changes" --provider deepseek --only --json`;
 }
 
 function readJson(path, fallback = {}) {
@@ -103,18 +113,50 @@ function normalizeProvider(provider) {
 	return undefined;
 }
 
-function pickProvider(argProvider, settings, auth) {
-	const forced = normalizeProvider(argProvider);
-	if (forced) return forced;
-	const fromSettings = normalizeProvider(settings?.defaultProvider);
-	if (fromSettings) return fromSettings;
-	// ponytail: kimi-coding first because openai-codex auth here is a ChatGPT account, whose models
-	// reject the chatgpt backend (HTTP 400) and pi-ai 0.85.1 exposes no getModels() to probe with.
-	// Upgrade path: discover providers/models from the pi catalog once that export exists.
-	for (const candidate of ["kimi-coding", "openai-codex", "anthropic", "deepseek"]) {
-		if (auth?.[candidate]) return candidate;
-	}
-	throw new Error("Could not determine provider. Pass --provider openai-codex|anthropic|kimi-coding|deepseek");
+function apiKeyEnvVar(provider) {
+	return `${provider.replace(/-/g, "_").toUpperCase()}_API_KEY`;
+}
+
+function hasCredentials(provider, auth) {
+	return Boolean(auth?.[provider] || process.env[apiKeyEnvVar(provider)]);
+}
+
+// Ordered list: --provider first, then settings.defaultProvider, then the documented order, filtered to
+// providers that can even authenticate. Unusable ones (403 subscription, 402 balance, 400 model) are
+// skipped at request time, not here, so the attempt summary can report why.
+function providerOrder(argProvider, settings, auth) {
+	const requested = [normalizeProvider(argProvider), normalizeProvider(settings?.defaultProvider)].filter(Boolean);
+	const order = [];
+	const add = (provider) => {
+		if (provider && !order.includes(provider)) order.push(provider);
+	};
+	for (const provider of requested) add(provider);
+	for (const provider of KNOWN_PROVIDERS) add(provider);
+	return order.filter((provider) => requested.includes(provider) || hasCredentials(provider, auth));
+}
+
+function errorStatus(err) {
+	const status = Number(String(err?.message || err).match(/failed \((\d{3})\)/)?.[1]);
+	return Number.isFinite(status) ? status : undefined;
+}
+
+// Provider-level failures (auth, quota, subscription, rate limit) fail every model, so stop probing
+// models. Model-specific failures answer 400/404 ("model is not supported...") and deserve the next one.
+function shouldTryNextModel(err) {
+	const status = errorStatus(err);
+	return status === 400 || status === 404;
+}
+
+function describeFailure(err) {
+	const message = String(err?.message || err).replace(/\s+/g, " ").trim();
+	const status = errorStatus(err);
+	const detail = message.replace(/^[^:]*failed \(\d{3}\):\s*/, "").slice(0, 100) || message.slice(0, 100);
+	return status ? `${status}: ${detail}` : detail;
+}
+
+// One line on stderr keeps stdout pipeable and --json valid.
+function reportAttempts(attempts) {
+	if (attempts.length > 1) console.error(`web-search: tried ${attempts.join(", ")}`);
 }
 
 function decodeJwtAccountId(jwt) {
@@ -136,6 +178,47 @@ function findPiExecutable() {
 	return result.stdout.split(/\r?\n/).map((x) => x.trim()).find(Boolean) || undefined;
 }
 
+function compareVersionsDesc(a, b) {
+	const parts = (v) => String(v).split(/[^0-9]+/).filter(Boolean).map(Number);
+	const pa = parts(a);
+	const pb = parts(b);
+	for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+		const diff = (pb[i] || 0) - (pa[i] || 0);
+		if (diff) return diff;
+	}
+	return 0;
+}
+
+// Managed pi installs live in <agent>/install/releases/<version>, listed newest first with the
+// version named by install/current-version promoted to the front.
+function listReleaseDirs() {
+	const agentDir = getAgentDir();
+	const releasesDir = join(agentDir, "install", "releases");
+	let names;
+	try {
+		names = readdirSync(releasesDir, { withFileTypes: true })
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => entry.name);
+	} catch {
+		return [];
+	}
+	names.sort(compareVersionsDesc);
+	let current;
+	try {
+		current = readFileSync(join(agentDir, "install", "current-version"), "utf8").trim();
+	} catch {}
+	if (current && names.includes(current)) names = [current, ...names.filter((name) => name !== current)];
+	return names.map((name) => join(releasesDir, name));
+}
+
+function resolveBareModuleDir(specifier) {
+	try {
+		return dirname(fileURLToPath(import.meta.resolve(specifier)));
+	} catch {
+		return undefined;
+	}
+}
+
 function collectModuleCandidates(fileName, envVarName) {
 	const candidates = new Set();
 	const add = (p) => {
@@ -143,6 +226,10 @@ function collectModuleCandidates(fileName, envVarName) {
 		candidates.add(isAbsolute(p) ? p : resolve(p));
 	};
 	if (envVarName && process.env[envVarName]) add(process.env[envVarName]);
+	for (const releaseDir of listReleaseDirs()) {
+		add(join(releaseDir, "node_modules", "@earendil-works", "pi-ai", "dist", fileName));
+		add(join(releaseDir, "node_modules", "@earendil-works", "pi-coding-agent", "node_modules", "@earendil-works", "pi-ai", "dist", fileName));
+	}
 	const scriptDir = dirname(fileURLToPath(import.meta.url));
 	for (const start of [process.cwd(), scriptDir]) {
 		let dir = start;
@@ -167,19 +254,41 @@ function collectModuleCandidates(fileName, envVarName) {
 async function loadPiAi() {
 	const tried = [];
 	try {
-		return await import("@earendil-works/pi-ai");
+		return { piAi: await import("@earendil-works/pi-ai"), distDir: resolveBareModuleDir("@earendil-works/pi-ai") };
 	} catch (err) {
 		tried.push(`@earendil-works/pi-ai (${err?.code || err?.message || "not found"})`);
 	}
 	for (const candidate of collectModuleCandidates("index.js", "PI_AI_MODULE_PATH")) {
 		if (!existsSync(candidate)) continue;
 		try {
-			return await import(pathToFileURL(candidate).href);
+			return { piAi: await import(pathToFileURL(candidate).href), distDir: dirname(candidate) };
 		} catch (err) {
 			tried.push(`${candidate} (${err?.code || err?.message || "failed"})`);
 		}
 	}
 	throw new Error(`Could not load @earendil-works/pi-ai. Set PI_AI_MODULE_PATH to its dist/index.js.\nTried:\n- ${tried.join("\n- ")}`);
+}
+
+// pi-ai 1.1.0 dropped the top-level getModels() export; the catalog now lives in providers/all.js
+// (getBuiltinModels) with compat.js as its deprecated alias, and models.generated.js as a last resort.
+async function loadModelCatalog(piAi, distDir) {
+	if (typeof piAi?.getModels === "function") return (provider) => piAi.getModels(provider) || [];
+	if (distDir) {
+		for (const [file, pick] of [
+			["providers/all.js", (mod) => mod.getBuiltinModels],
+			["compat.js", (mod) => mod.getModels],
+		]) {
+			try {
+				const fn = pick(await import(pathToFileURL(join(distDir, file)).href));
+				if (typeof fn === "function") return (provider) => fn(provider) || [];
+			} catch {}
+		}
+		try {
+			const { MODELS } = await import(pathToFileURL(join(distDir, "models.generated.js")).href);
+			if (MODELS) return (provider) => Object.values(MODELS[provider] || {});
+		} catch {}
+	}
+	return () => [];
 }
 
 async function loadPiAiOAuth(piAi) {
@@ -231,23 +340,26 @@ function getCachedOAuthAccess(entry, now = Date.now()) {
 	return { apiKey, accountId: entry.accountId };
 }
 
-function pickFastModel(provider, requestedModel, piAi) {
-	const models = typeof piAi.getModels === "function" ? piAi.getModels(provider) : [];
-	if (!Array.isArray(models) || models.length === 0) {
-		if (requestedModel) return { id: requestedModel, baseUrl: undefined };
-		return FALLBACK_MODELS[provider];
-	}
+function modelCandidates(provider, requestedModel, listModels) {
+	const catalog = listModels(provider) || [];
 	if (requestedModel) {
-		const exact = models.find((m) => m.id === requestedModel);
-		if (exact) return exact;
-		return { ...models[0], id: requestedModel };
+		const exact = catalog.find((model) => model.id === requestedModel);
+		return [exact || { ...(FALLBACK_MODELS[provider] || {}), id: requestedModel }];
 	}
+	const remaining = new Map(catalog.map((model) => [model.id, model]));
+	const ordered = [];
 	for (const id of PREFERRED_MODELS[provider] || []) {
-		const found = models.find((m) => m.id === id);
-		if (found) return found;
+		const found = remaining.get(id);
+		if (!found) continue;
+		ordered.push(found);
+		remaining.delete(id);
+		if (ordered.length >= MAX_MODEL_ATTEMPTS) return ordered;
 	}
-	const heuristic = models.find((m) => /mini|haiku|spark|flash|fast/i.test(m.id));
-	return heuristic || models[0];
+	if (ordered.length) return ordered;
+	const rest = Array.from(remaining.values());
+	const heuristic = rest.find((model) => /mini|haiku|flash|fast|small|nano/i.test(model.id));
+	const fallback = heuristic || rest[0] || FALLBACK_MODELS[provider];
+	return fallback ? [fallback] : [];
 }
 
 async function resolveApiKey(provider, auth, authPath, piAi) {
@@ -293,8 +405,18 @@ async function resolveApiKey(provider, auth, authPath, piAi) {
 	return { apiKey: refreshed.apiKey, accountId: mergedCred.accountId };
 }
 
+const OUTPUT_SPEC = `Return a concise research summary with:
+- 3 to 7 key findings
+- for every finding: title, why it matters for this purpose, and a full canonical URL (https://...)
+- if multiple sources disagree, call that out
+- finish with a short recommendation on which source(s) to trust first.`;
+
 function buildUserPrompt(query, purpose) {
-	return `Search the internet for: ${query}\n\nPurpose: ${purpose}\n\nReturn a concise research summary with:\n- 3 to 7 key findings\n- for every finding: title, why it matters for this purpose, and a full canonical URL (https://...)\n- if multiple sources disagree, call that out\n- finish with a short recommendation on which source(s) to trust first.`;
+	return `Search the internet for: ${query}\n\nPurpose: ${purpose}\n\n${OUTPUT_SPEC}`;
+}
+
+function buildSynthesisPrompt(query, purpose, context) {
+	return `Search the internet for: ${query}\n\nPurpose: ${purpose}\n\nThe search is already done. Results from DeepSeek's search engine:\n\n${context}\n\n${OUTPUT_SPEC}\n- never invent URLs or facts that are not in the results above\n- prefer results with a higher authority tier and relevance score`;
 }
 
 function buildSystemPrompt() {
@@ -410,16 +532,17 @@ function buildMessagesHeaders(provider, apiKey) {
 	return headers;
 }
 
-async function runMessagesSearch({ provider, model, apiKey, query, purpose, timeoutMs }) {
+async function runMessagesSearch({ provider, model, apiKey, query, purpose, timeoutMs, context }) {
 	const config = MESSAGES_PROVIDERS[provider];
 	const body = {
 		model,
 		max_tokens: 1800,
 		temperature: 0,
 		system: buildSystemPrompt(),
-		tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
-		messages: [{ role: "user", content: buildUserPrompt(query, purpose) }],
+		messages: [{ role: "user", content: context ? buildSynthesisPrompt(query, purpose, context) : buildUserPrompt(query, purpose) }],
 	};
+	// With pre-fetched results the model only writes up; without them it has to run the server tool itself.
+	if (!context) body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }];
 	const res = await fetch(`${config.baseUrl}/v1/messages`, {
 		method: "POST",
 		headers: buildMessagesHeaders(provider, apiKey),
@@ -443,6 +566,87 @@ async function runMessagesSearch({ provider, model, apiKey, query, purpose, time
 	return text;
 }
 
+const DEEPSEEK_SEARCH_COUNT = 8;
+const DEEPSEEK_RESULT_CONTENT_CHARS = 1200;
+
+// The Search API rejects queries over 128 characters; trim at a word boundary so the engine still
+// reads a phrase instead of a chopped word.
+function clampSearchQuery(query, max = 128) {
+	const clean = String(query).replace(/\s+/g, " ").trim();
+	if (clean.length <= max) return clean;
+	const cut = clean.slice(0, max);
+	const boundary = cut.lastIndexOf(" ");
+	return boundary > max * 0.6 ? cut.slice(0, boundary) : cut;
+}
+
+async function deepseekSearchResults({ apiKey, query, timeoutMs }) {
+	const config = MESSAGES_PROVIDERS.deepseek;
+	const res = await fetch(`${config.apiBase}/v1/tools/search`, {
+		method: "POST",
+		headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json", accept: "application/json" },
+		body: JSON.stringify({ query: clampSearchQuery(query), count: DEEPSEEK_SEARCH_COUNT, need_content: true }),
+		signal: AbortSignal.timeout(timeoutMs),
+	});
+	const payload = await res.text();
+	if (!res.ok) throw new Error(`deepseek search request failed (${res.status}): ${payload}`);
+	let parsed;
+	try {
+		parsed = JSON.parse(payload);
+	} catch {
+		throw new Error("deepseek search returned non-JSON response");
+	}
+	return (Array.isArray(parsed?.results) ? parsed.results : []).filter((item) => item && typeof item.url === "string");
+}
+
+function buildSearchResultsBlock(results) {
+	return results
+		.map((item, index) => {
+			const meta = [
+				item.site_name ? `site: ${item.site_name}` : undefined,
+				typeof item.date === "string" ? `published: ${item.date}` : undefined,
+				Number.isInteger(item.authority) && item.authority >= 0 ? `authority: ${item.authority}/4` : undefined,
+				Number.isFinite(item.rerank_score) ? `relevance: ${item.rerank_score}/3` : undefined,
+			].filter(Boolean);
+			const lines = [`${index + 1}. ${item.title || "(untitled)"}`, `URL: ${item.url}`];
+			if (meta.length) lines.push(meta.join(", "));
+			const summary = String(item.summary || "").replace(/\s+/g, " ").trim();
+			if (summary) lines.push(`Summary: ${summary}`);
+			const content = String(item.content || "").replace(/\s+/g, " ").trim();
+			if (content) lines.push(`Content: ${content.slice(0, DEEPSEEK_RESULT_CONTENT_CHARS)}${content.length > DEEPSEEK_RESULT_CONTENT_CHARS ? " [truncated]" : ""}`);
+			return lines.join("\n");
+		})
+		.join("\n\n");
+}
+
+// DeepSeek's server-side web_search tool hits the same in-house engine as the Search API, but a
+// proxy can accept the tool and answer from memory without ever searching. So query the Search API
+// first (real, citable URLs) and keep the server tool as the fallback for keys that lack access to
+// the raw endpoint. 401/402 are account-level: the tool call would fail the same way.
+async function runDeepSeekSearch({ model, apiKey, query, purpose, timeoutMs }) {
+	try {
+		const results = await deepseekSearchResults({ apiKey, query, timeoutMs });
+		if (results.length) {
+			const text = await runMessagesSearch({ provider: "deepseek", model, apiKey, query, purpose, timeoutMs, context: buildSearchResultsBlock(results) });
+			return { text, backend: `search-api ${results.length} results` };
+		}
+		console.error("web-search: deepseek search-api returned no results, falling back to the web_search tool");
+	} catch (err) {
+		const status = errorStatus(err);
+		if (status === 401 || status === 402) throw err;
+		console.error(`web-search: deepseek search-api unusable (${describeFailure(err)}), falling back to the web_search tool`);
+	}
+	const text = await runMessagesSearch({ provider: "deepseek", model, apiKey, query, purpose, timeoutMs });
+	// A tool call that was accepted but ignored leaves an answer with no sources at all.
+	if (!/https?:\/\//.test(text)) console.error("web-search: deepseek returned no source URLs; treat the summary as unverified");
+	return { text, backend: "web-search-tool" };
+}
+
+async function runSearch({ provider, model, apiKey, accountId, query, purpose, timeoutMs }) {
+	if (provider === "openai-codex") return { text: await runCodexSearch({ model: model.id, apiKey, accountId, query, purpose, timeoutMs, baseUrl: model.baseUrl }), backend: "web-search-tool" };
+	if (provider === "deepseek") return runDeepSeekSearch({ model: model.id, apiKey, query, purpose, timeoutMs });
+	return { text: await runMessagesSearch({ provider, model: model.id, apiKey, query, purpose, timeoutMs }), backend: "web-search-tool" };
+}
+
 async function main() {
 	const args = parseArgs(process.argv.slice(2));
 	if (args.help || !args.query) {
@@ -453,22 +657,41 @@ async function main() {
 	const authPath = join(agentDir, "auth.json");
 	const auth = readJson(authPath, {});
 	const settings = readJson(join(agentDir, "settings.json"), {});
-	const provider = pickProvider(args.provider, settings, auth);
-	const piAi = await loadPiAi();
-	const model = pickFastModel(provider, args.model, piAi);
-	const { apiKey, accountId } = await resolveApiKey(provider, auth, authPath, piAi);
-	const text =
-		provider === "openai-codex"
-			? await runCodexSearch({ model: model.id, apiKey, accountId, query: args.query, purpose: args.purpose, timeoutMs: args.timeoutMs, baseUrl: model.baseUrl })
-			: await runMessagesSearch({ provider, model: model.id, apiKey, query: args.query, purpose: args.purpose, timeoutMs: args.timeoutMs });
-	if (args.json) {
-		console.log(JSON.stringify({ provider, model: model.id, query: args.query, purpose: args.purpose, result: text }, null, 2));
-		return;
+	const candidates = providerOrder(args.provider, settings, auth);
+	const providers = args.only ? candidates.slice(0, 1) : candidates;
+	if (!providers.length) {
+		throw new Error(`No authenticated provider. Known providers: ${KNOWN_PROVIDERS.join("|")}. Add credentials to ${authPath} or pass --provider.`);
 	}
-	console.log(`Provider: ${provider}`);
-	console.log(`Model: ${model.id}`);
-	console.log("");
-	console.log(text);
+	const { piAi, distDir } = await loadPiAi();
+	const listModels = await loadModelCatalog(piAi, distDir);
+	const attempts = [];
+	let lastError;
+	for (const provider of providers) {
+		for (const model of modelCandidates(provider, args.model, listModels)) {
+			const label = `${provider}/${model.id}`;
+			try {
+				const { apiKey, accountId } = await resolveApiKey(provider, auth, authPath, piAi);
+				const { text, backend } = await runSearch({ provider, model, apiKey, accountId, query: args.query, purpose: args.purpose, timeoutMs: args.timeoutMs });
+				attempts.push(`${label} ok (${backend})`);
+				reportAttempts(attempts);
+				if (args.json) {
+					console.log(JSON.stringify({ provider, model: model.id, query: args.query, purpose: args.purpose, result: text }, null, 2));
+					return;
+				}
+				console.log(`Provider: ${provider}`);
+				console.log(`Model: ${model.id}`);
+				console.log("");
+				console.log(text);
+				return;
+			} catch (err) {
+				lastError = err;
+				attempts.push(`${label} ${describeFailure(err)}`);
+				if (!shouldTryNextModel(err)) break;
+			}
+		}
+	}
+	reportAttempts(attempts);
+	throw lastError || new Error("All providers failed");
 }
 
 main().catch((err) => {
