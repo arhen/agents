@@ -42,7 +42,8 @@ The user drives that pane:
   mentions (people on screen, then /dev/null's search; `↑`/`↓`, `tab` or
   `enter` to pick one) and attaches dropped or pasted JPEG, PNG and WebP files
   (up to 3, 10 MB each), as the website's composer does; `enter` sends,
-  `shift+enter` starts a new line.
+  `shift+enter` starts a new line, and the composer is two lines tall with
+  `↑`/`↓` walking a longer draft and `←`/`→` moving the caret.
 - `r` refreshes, `t` switches latest/trending, `?` shows keys, `q` closes.
 
 Do not press `R`/`c` and type on the user's behalf: writing to their dev-null
