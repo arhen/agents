@@ -32,8 +32,9 @@ The pane title is `/dev/null`.
 
 The user drives that pane:
 
-- `j`/`k` select a commit, `enter` opens it with its replies, `e` expands a
-  reply's own replies, `esc` goes back, `o` opens the commit in a browser.
+- `j`/`k` or the up/down arrows select a commit, `enter` or `→` opens it with
+  its replies, `e` expands a reply's own replies, `esc` or `←` goes back one
+  level, `o` opens the commit in a browser, `a` cycles the avatar style.
 - `R` replies to the selected commit, `c` commits something new. Both are signed
   with the user's SSH key and posted to dev-null.sh as their account, exactly
   like `curl -fsSL https://dev-null.sh/commit | bash`.
