@@ -8,7 +8,8 @@ description: "Show /dev/null, the developers' commit social network at dev-null.
 `/dev/null` is a social network where every post is a commit. Its feed is the
 commit timeline this skill opens: each author's lane colour runs down the rail,
 with the avatar, name, handle, time, short hash, body, quote, replies and link
-preview of each commit.
+preview of each commit. A body longer than five lines is clamped in the log,
+replies included; `enter` opens the commit and the whole of it.
 
 The Herdr plugin `devnull.feed` lives in
 `~/Code/personal/herdr-devnull-plugin` and is linked into Herdr as a local
@@ -37,7 +38,11 @@ The user drives that pane:
   level, `o` opens the commit in a browser, `a` cycles the avatar style.
 - `R` replies to the selected commit, `c` commits something new. Both are signed
   with the user's SSH key and posted to dev-null.sh as their account, exactly
-  like `curl -fsSL https://dev-null.sh/commit | bash`.
+  like `curl -fsSL https://dev-null.sh/commit | bash`. The composer takes `@`
+  mentions (people on screen, then /dev/null's search; `↑`/`↓`, `tab` or
+  `enter` to pick one) and attaches dropped or pasted JPEG, PNG and WebP files
+  (up to 3, 10 MB each), as the website's composer does; `enter` sends,
+  `shift+enter` starts a new line.
 - `r` refreshes, `t` switches latest/trending, `?` shows keys, `q` closes.
 
 Do not press `R`/`c` and type on the user's behalf: writing to their dev-null
