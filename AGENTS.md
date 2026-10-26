@@ -53,6 +53,13 @@ Never ask for a rubber stamp. If running something could answer the question, ru
 
 Once I open a one-way door it stays open for that work, subagents included. Come back only if the door turned out different from the one I opened: more at stake than I was told, a check failing, something I didn't know about.
 
+## Subagent models (owner, 2026-10-26)
+
+- **Implementation, review, cleanup: `opencode-go/deepseek-v4.1-flash`** with thinking `max`. Default for every write task; pin it on each spawn.
+- **Security audit, adversarial review: `opencode-go/glm-5.3-flash`** with thinking `max`.
+- **Never Sonnet** (`9router/cc/claude-sonnet-5-5`) or Opus — dropped by the owner 2026-10-26; the free 9router endpoints are rate-limited anyway. Do not "fall back" to them when a provider throttles: retry the same model, or switch deepseek ↔ GLM by role.
+- After spawning, confirm the model actually in use (session file / model check); a silent fallback is a defect to fix, not to accept.
+
 ## Response Guidelines
 
 MUST apply this before doing any tasks:
