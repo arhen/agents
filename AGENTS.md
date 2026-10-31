@@ -88,6 +88,21 @@ Priority:
 
 MCP setup/inspection: `mcp({ action: "install", url })`, `mcp()` for server status, `mcp({ search: "..." })` to find tools. Exa MCP is rate-limited but needs no key; for version/release claims search first, then fetch the top URL before quoting it.
 
+## Browser
+
+`browser-use` always runs in headless mode — never open a browser window on the owner's desktop. Attach it to your own headless Chrome:
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+  --remote-debugging-port=9333 --user-data-dir=/tmp/chrome-headless \
+  --hide-scrollbars --force-color-profile=srgb --window-size=1280,800 about:blank &
+BU_CDP_URL=http://127.0.0.1:9333 browser-use <<'PY'
+new_tab("https://example.com"); print(page_info()); print(capture_screenshot("/tmp/shot.png"))
+PY
+```
+
+Headless still paints, so screenshots work; only windowed mode is off limits, and only when the owner explicitly asks to watch.
+
 ## Pi Extension Release
 
 Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extensions), one dir per package under `packages/`. Naming tells type: `pi-core-*` (core set), `pi-add-*` (add-ons), `pi-toolset` (manager).
