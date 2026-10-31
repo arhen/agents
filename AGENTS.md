@@ -1,14 +1,5 @@
 # Global Agent Instructions
 
-## Token Efficiency
-
-`rtk` = output-compacting CLI proxy. Prefix shell cmds to cut token noise. Pass-through for non-compacting cmds — always safe:
-
-See rtk CLI; `rtk help` for usage.
-
-Prefix each chain segment: `rtk git add . && rtk git commit -m "msg" && rtk git push`.
-Filter subcmds (err/summary/test) are opt-in — grab when noise high, not auto-added.
-
 ## File Tools Guidelines
 
 Prefer built-in search tools over shell grep/find (shell only when tools lack needed flags).
@@ -22,8 +13,7 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 
 ## Modifying Files
 
-Use the built-in **edit** tool for every change to an existing file. Use the built-in **write** tool for new files or full rewrites. This is the default — not a preference.
-
+ALWAYS use built-in **write/edit** tool.
 Scripts and MCP are fallbacks, allowed ONLY when the write/edit tool cannot do the job:
 
 1. Language-based script (Python/Node/sed/awk) — bulk/mechanical changes (e.g. 1000+ replacements), generated or machine-owned files.
@@ -53,16 +43,10 @@ Never ask for a rubber stamp. If running something could answer the question, ru
 
 Once I open a one-way door it stays open for that work, subagents included. Come back only if the door turned out different from the one I opened: more at stake than I was told, a check failing, something I didn't know about.
 
-## Subagent models (owner, 2026-10-26)
-
-- **Implementation, review, cleanup: `opencode-go/deepseek-v4.1-flash`** with thinking `max`. Default for every write task; pin it on each spawn.
-- **Security audit, adversarial review: `opencode-go/glm-5.3-flash`** with thinking `max`.
-- **Never Sonnet** (`9router/cc/claude-sonnet-5-5`) or Opus — dropped by the owner 2026-10-26; the free 9router endpoints are rate-limited anyway. Do not "fall back" to them when a provider throttles: retry the same model, or switch deepseek ↔ GLM by role.
-- After spawning, confirm the model actually in use (session file / model check); a silent fallback is a defect to fix, not to accept.
-
 ## Response Guidelines
 
 MUST apply this before doing any tasks:
+
 - Non-trivial tasks → apply "Address User's requests" method above.
 - Use Caveman **ultra** for non-trivial tasks: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
 - For trivial tasks, use ASD-STE100 Simplified Technical English.
@@ -80,17 +64,20 @@ MUST apply this before doing any tasks:
 ## Web Search
 
 Priority:
-1. Model's built-in search.
-2. Exa MCP (keyless) — check your tool list first: if `mcp_web_search_exa` / `mcp_web_fetch_exa` exist, use them. Search takes `query` + `objective` (describe the page you want, not keywords) + `numResults`; `mcp_web_fetch_exa` reads URLs as markdown, batch them. Registered by `pi-mcp-adapter` as server `exa` in `~/.pi/agent/mcp.json`; tools absent (fresh machine, no adapter) → skip to 3.
-3. Any other installed tool/plugin/mcp/extension/connector. `radius_web_search` only when Radius creds exist — otherwise it fails with a missing-key/402 error.
-4. Fallback: `web-search` skill — `node ~/.agents/skills/web-search/search.mjs "<query>" --purpose "<why>"` (defaults to first authenticated of kimi-coding → openai-codex → anthropic → deepseek; `--provider` overrides).
-5. If all unavailable, do NOT web search — report back to user.
 
-MCP setup/inspection: `mcp({ action: "install", url })`, `mcp()` for server status, `mcp({ search: "..." })` to find tools. Exa MCP is rate-limited but needs no key; for version/release claims search first, then fetch the top URL before quoting it.
+1. Model's built-in search.
+2. Exa MCP (keyless) — check your tool list first. Tools absent (fresh machine, no adapter) → skip to 3.
+3. Any other installed tool/plugin/mcp/extension/connector.
+4. Fallback: `web-search` skill — `node ~/.agents/skills/web-search/search.mjs "<query>" --purpose "<why>"` (defaults to which provider's model currently used; `--provider` overrides).
+5. If all unavailable, do NOT web search — report back to user.
 
 ## Browser
 
-`browser-use` always runs headless. Never open a browser window on the owner's desktop.
+- **Visual sim, visual critique, screenshot, "does this look right"** → `browser-use` on real Chrome.
+
+- **Non-visual / scripted browse** — scrape, fill, navigate, DOM assertions, bulk, replay → `lightpanda`.
+
+- `browser-use` always runs headless. Never open a browser window on the owner's desktop.
 
 ## Pi Extension Release
 
@@ -99,13 +86,3 @@ Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extens
 Release cycle: edit source in monorepo → commit (clean tree) → `npm run release -- [--minor|--major] <pkg>...` from repo root. Script runs the package `check`, bumps, publishes, commits + tags `<pkg>@<version>`, pushes, then `pi update npm:@arhen/<pkg>`. `--dry-run` = check + `npm publish --dry-run` only.
 
 Packages version independently. `pi-toolset` discovers the family from npm at runtime → release it only when its own script changes.
-
-<posthog>
-## PostHog
-
-Use `posthog-cli api` for all PostHog-related data queries and operations. You should use `posthog-cli api` over direct MCP tool calls whenever the CLI is available.
-
-Before your first PostHog command in a session, run `posthog-cli api --agent-help` and load its full output into your context. It prints the complete agent guide — command reference, schema drill-down rules, data discovery workflow, and the tool index — for interacting with PostHog APIs. Treat that output as instructions to follow, not just documentation.
-
-Before starting a PostHog task, run `posthog-cli api skill list` and check for a skill matching the task. If one matches, install it with `posthog-cli api skill install <skill-id>` (add `--force` to refresh an already-installed skill), then read `.agents/skills/<skill-id>/SKILL.md` and follow it. Skills contain task-specific workflows that individual tools do not.
-</posthog>

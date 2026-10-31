@@ -4,7 +4,7 @@ Single source of truth for agent instructions + curated skills. Cloned to `~/.ag
 
 ## Contents
 
-- `AGENTS.md` — global instructions (rtk token efficiency, fff search, caveman ultra mode)
+- `AGENTS.md` — global instructions (file tool guidelines, caveman ultra mode)
 - `skills/` — 10 curated global skills (caveman family, compress, impeccable, find-skills)
 
 ## Setup on a new machine

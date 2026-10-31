@@ -31,7 +31,7 @@ gh extension list | grep -i stack        # expect: gh stack  github/gh-stack
 gh extension install github/gh-stack     # if missing
 ```
 
-Note: if the shell prefixes `gh` with a wrapper (e.g. `rtk gh`), invoke the real binary —
+Note: if the shell prefixes `gh` with a wrapper, invoke the real binary —
 `/usr/bin/env gh stack ...` — because the wrapper passes `stack` through to `gh pr` and fails.
 
 ## Core commands
