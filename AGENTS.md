@@ -13,7 +13,11 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 
 ## Shell
 
-Each `bash` call starts fresh in the session cwd; `cd` never persists between calls. Do not prefix `cd <session cwd> && …` — you are already there. Chain `cd` only to reach a different directory, and prefer `git -C <dir>` over `cd` for git.
+Each `bash` call starts fresh in the session cwd; `cd` never persists between calls.
+
+- Target inside the session cwd or nested below it → address it relatively (`project/`, `packages/api/`) and never repeat the cwd path or `cd <session cwd>`.
+- Target outside the session cwd → `cd <path>` is fine.
+- Prefer `git -C <dir>` over `cd` for git.
 
 ## Modifying Files
 
