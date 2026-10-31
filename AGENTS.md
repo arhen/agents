@@ -13,7 +13,8 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 
 Each `bash` call starts fresh in the session cwd; `cd` never persists between calls.
 
-- Target inside the session cwd or nested below it → address it relatively (`project/`, `packages/api/`). `cd` into a nested dir only when the tool resolves config from its cwd (npm, pytest, cargo); otherwise pass the path.
+- Target inside the session cwd or nested below it → address it relatively (`project/`, `packages/api/`). Never `cd` there just to run a command. `git -C <dir>`, `ls <dir>`, `grep <dir>`, `psql -f <file>` all take paths, so they need no `cd`. `gh --repo` replaces `cd` for PR work. `cd` into a nested dir only for tools that discover config from the process cwd (npm, pnpm, yarn, pytest, cargo, next, docker compose).
+- Banned shapes: `cd <repo>/api; git log …` → `git -C api log …`; `cd <repo>/api; psql …` → no `cd` at all.
 - Target outside the session cwd → `cd <path>` or an absolute path in the command, both fine.
 - Prefer `git -C <dir>` over `cd` for git.
 
