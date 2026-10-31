@@ -92,10 +92,22 @@ MCP setup/inspection: `mcp({ action: "install", url })`, `mcp()` for server stat
 
 Pick the engine by deliverable, not by habit. Pixels exist → Chrome. No pixels → lightpanda. Plain HTTP fetch (`curl`, Exa fetch) still comes first when a page reads without JS.
 
-- **Visual sim, visual critique, screenshot, "does this look right"** → `browser-use` on real Chrome (`browser-use <<'PY' … PY`, daemon keeps the tab across calls; logged-in profile is the point).
+- **Visual sim, visual critique, screenshot, "does this look right"** → `browser-use` on Chrome, **headless by default (owner, 2026-10-31)** — never open a window on the owner's desktop:
+
+  ```bash
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+    --remote-debugging-port=9333 --user-data-dir=/tmp/chrome-bu-headless --hide-scrollbars \
+    --force-color-profile=srgb --force-device-scale-factor=1 --window-size=1280,800 about:blank &
+  BU_CDP_URL=http://127.0.0.1:9333 browser-use <<'PY'
+  new_tab("https://example.com"); print(page_info()); print(capture_screenshot("/tmp/shot.png"))
+  PY
+  ```
+
+  Headless still paints — verified: Chrome 156 headless, `Page.captureScreenshot` → full CSS render, 0 visible windows. Limits vs windowed: GPU-less raster (blur/backdrop-filter/WebGL go through SwiftShader), greyscale AA instead of subpixel. Windowed Chrome only when the owner explicitly asks to watch.
+
 - **Non-visual / scripted browse** — scrape, fill, navigate, DOM assertions, bulk, replay → `lightpanda` (`lightpanda serve --host 127.0.0.1 --port 9222`, CDP at `ws://127.0.0.1:9222`; one-shot via `lightpanda fetch --dump markdown <url>`).
 
-lightpanda has no renderer by design: no screenshot, no coordinate clicks, no hover/drag. Interact through the DOM only (`Runtime.evaluate` → `el.click()`, set value + dispatch `input`). It is not a gate — no assertions; verify with a state poll plus a text/snapshot diff.
+lightpanda has no renderer by design: no screenshot, no coordinate clicks, no hover/drag. Its `--dump png`/`--dump pdf` are **text-only** re-renders, not page paints — no CSS, missing CJK glyphs. Interact through the DOM only (`Runtime.evaluate` → `el.click()`, set value + dispatch `input`). It is not a gate — no assertions; verify with a state poll plus a text/snapshot diff.
 
 No Playwright anywhere (owner, dropped). Verification = deterministic DOM action + polled predicate + text diff.
 
