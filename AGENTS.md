@@ -1,5 +1,3 @@
-# Global Agent Instructions
-
 ## File Tools Guidelines
 
 Prefer built-in search tools over shell grep/find (shell only when tools lack needed flags).
