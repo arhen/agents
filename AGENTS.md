@@ -9,7 +9,7 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 3. Code semantics — real refs, structure, or an edit → ast-grep (CLI).
 4. Identifier search: grep first; if comment/string false-positives pollute, redo with ast-grep.
 5. ALWAYS work through `codemode` when it is available. Check `codemode` mode exist on the harness first before doing any scripting.
-6. DO NOT use any ad-hoc Python/Node helper script if `codemode` mdoe available.
+6. DO NOT use any ad-hoc Python/Node helper script if `codemode` mode available.
 
 ## Modifying Files
 
