@@ -15,8 +15,8 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 
 Each `bash` call starts fresh in the session cwd; `cd` never persists between calls.
 
-- Target inside the session cwd or nested below it → address it relatively (`project/`, `packages/api/`) and never repeat the cwd path or `cd <session cwd>`.
-- Target outside the session cwd → `cd <path>` is fine.
+- Target inside the session cwd or nested below it → address it relatively (`project/`, `packages/api/`). `cd` into a nested dir only when the tool resolves config from its cwd (npm, pytest, cargo); otherwise pass the path.
+- Target outside the session cwd → `cd <path>` or an absolute path in the command, both fine.
 - Prefer `git -C <dir>` over `cd` for git.
 
 ## Modifying Files
