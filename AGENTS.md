@@ -88,19 +88,6 @@ Priority:
 
 MCP setup/inspection: `mcp({ action: "install", url })`, `mcp()` for server status, `mcp({ search: "..." })` to find tools. Exa MCP is rate-limited but needs no key; for version/release claims search first, then fetch the top URL before quoting it.
 
-## Browser Automation Routing
-
-Pick the engine by deliverable, not by habit. Pixels exist → Chrome. No pixels → lightpanda. Plain HTTP fetch (`curl`, Exa fetch) still comes first when a page reads without JS.
-
-- **Visual sim, visual critique, screenshot, "does this look right"** → `browser-use` on real Chrome (`browser-use <<'PY' … PY`, daemon keeps the tab across calls; logged-in profile is the point).
-- **Non-visual / scripted browse** — scrape, fill, navigate, DOM assertions, bulk, replay → `lightpanda` (`lightpanda serve --host 127.0.0.1 --port 9222`, CDP at `ws://127.0.0.1:9222`; one-shot via `lightpanda fetch --dump markdown <url>`).
-
-lightpanda has no renderer by design: no screenshot, no coordinate clicks, no hover/drag. Interact through the DOM only (`Runtime.evaluate` → `el.click()`, set value + dispatch `input`). It is not a gate — no assertions; verify with a state poll plus a text/snapshot diff.
-
-No Playwright anywhere (owner, dropped). Verification = deterministic DOM action + polled predicate + text diff.
-
-Never let the 9222/9223 port probe choose the engine, and never give the two engines tabs. A stray `lightpanda serve` on 9222 silently becomes "browser-use" and every click no-ops without an error. Set `BU_CDP_URL` explicitly, one daemon per engine with its own `BH_RUNTIME_DIR`.
-
 ## Pi Extension Release
 
 Source of truth: monorepo `~/Code/personal/pi-extensions/` (repo arhen/pi-extensions), one dir per package under `packages/`. Naming tells type: `pi-core-*` (core set), `pi-add-*` (add-ons), `pi-toolset` (manager).
