@@ -11,6 +11,10 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 5. ALWAYS work through `codemode` when it is available. Check `codemode` mode exist on the harness first before doing any scripting.
 6. DO NOT use any ad-hoc Python/Node helper script if `codemode` mode available.
 
+## Shell
+
+Each `bash` call starts fresh in the session cwd; `cd` never persists between calls. Do not prefix `cd <session cwd> && …` — you are already there. Chain `cd` only to reach a different directory, and prefer `git -C <dir>` over `cd` for git.
+
 ## Modifying Files
 
 ALWAYS use built-in **write/edit** tool.
