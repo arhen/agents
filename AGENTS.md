@@ -9,7 +9,7 @@ Prefer built-in search tools over shell grep/find (shell only when tools lack ne
 3. Code semantics — real refs, structure, or an edit → ast-grep (CLI).
 4. Identifier search: grep first; if comment/string false-positives pollute, redo with ast-grep.
 5. Batching several commands or reading/filtering their output: use the `codemode` tool when available, not ad-hoc Python/Node helper scripts.
-6. Always work through `codemode` when it is available (owner, 2026-10-14; every task and session): run tool calls inside codemode scripts — batch independent calls with `Promise.allSettled`, chain dependent ones, filter output in the script, and show images with `image()` (more reliable than `read` on fresh screenshots). Call a tool directly only when codemode is unavailable or fails.
+6. Always work through `codemode` when it is available; every task and session): run tool calls inside codemode scripts — batch independent calls with `Promise.allSettled`, chain dependent ones, filter output in the script, and show images with `image()` (more reliable than `read` on fresh screenshots). Call a tool directly only when codemode is unavailable or fails.
 
 ## Modifying Files
 
@@ -37,6 +37,7 @@ Todos: 3+ sub-steps or a multi-part request → create them with the `todo` tool
 ## Two-way doors swing freely
 
 Two-way (reversible) doors: walk through, show me after.
+
 One-way (irreversible) doors: stop and ask — one question at a time, with your recommendation, using `ask_user_question`. "No" is an acceptable answer.
 
 Never ask for a rubber stamp. If running something could answer the question, run it instead. Questions are for taste and product calls only I can make.
@@ -51,15 +52,8 @@ MUST apply this before doing any tasks:
 - Use Caveman **ultra** for non-trivial tasks: terse, no filler, technical substance intact. Off only on explicit "normal mode"/"stop caveman".
 - For trivial tasks, use ASD-STE100 Simplified Technical English.
 - When working with code related tasks; DO NOT put unnecessary/narrating comments on file/func/method/logic/etc. Prefer self-explaining code. Put comments only on what code can't say: info needed to continue work later, or worth documenting.
-- UI work in a project with a design system (owner, 2026-10-15): the design system IS the design direction. Use its existing tokens, components and patterns; look them up before writing any element. If something is missing, build it once as a reusable, composable component in the system (usable here now and elsewhere later), then use it. Never hand-roll a one-off control or style a native element ad hoc inside a feature.
-
-## Ownership
-
-`~/.agents/AGENTS.md` = SINGLE SOURCE, symlinked to all agents (pi, Claude Code, opencode). Same for skills: `~/.agents/skills/`.
-
-- EDIT this file only; per-agent copies (`~/.pi/agent/`, `~/.claude/CLAUDE.md`, opencode) are symlinks/derived — edits lost.
-- Persist: `cd ~/.agents && git add -A && git commit -m "..." && git push` (repo arhen/agents).
-- Enforce this rule on every sub-project: creation/modify of AGENTS.md, CLAUDE.md, agents, and skills.
+- UI work in a project with a design system: the design system IS the design direction. Use its existing tokens, components and patterns; look them up before writing any element. If something is missing, build it once as a reusable, composable component in the system (usable here now and elsewhere later), then use it. Never hand-roll a one-off control or style a native element ad hoc inside a feature.
+- After doing certain tasks, always update TODO if any.
 
 ## Web Search
 
@@ -74,10 +68,16 @@ Priority:
 ## Browser
 
 - **Visual sim, visual critique, screenshot, "does this look right"** → `browser-use` on real Chrome.
-
 - **Non-visual / scripted browse** — scrape, fill, navigate, DOM assertions, bulk, replay → `lightpanda`.
-
 - `browser-use` always runs headless. Never open a browser window on the owner's desktop.
+
+## Ownership
+
+`~/.agents/AGENTS.md` = SINGLE SOURCE, symlinked to all agents (pi, Claude Code, opencode). Same for skills: `~/.agents/skills/`.
+
+- EDIT this file only; per-agent copies (`~/.pi/agent/`, `~/.claude/CLAUDE.md`, opencode) are symlinks/derived — edits lost.
+- Persist: `cd ~/.agents && git add -A && git commit -m "..." && git push` (repo arhen/agents).
+- Enforce this rule on every sub-project: creation/modify of AGENTS.md, CLAUDE.md, agents, and skills.
 
 ## Pi Extension Release
 
