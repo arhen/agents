@@ -78,6 +78,12 @@ Priority:
 - **Visual sim, visual critique, screenshot, "does this look right"** → `browser-use` on real Chrome.
 - **Non-visual / scripted browse** — scrape, fill, navigate, DOM assertions, bulk, replay → `lightpanda`.
 - `browser-use` always runs headless. Never open a browser window on the owner's desktop.
+- **Check resources before spawning headless Chrome, or a subagent that drives one:** run `~/.agents/bin/res-ok`. It exits 1 when CPU or memory use is at 85% or more. If it fails, wait and retry, and do not spawn.
+- **Maintain headless Chrome:**
+  - one shared instance per task; never one per subagent;
+  - every agent closes its own tabs when done;
+  - kill a wedged or idle instance (renderers pinned near 100% CPU while nothing is driving them) and relaunch it;
+  - stop all instances at the end of the work.
 
 ## Ownership
 

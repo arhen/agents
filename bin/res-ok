@@ -1,0 +1,11 @@
+#!/bin/sh
+# Exit 0 when the machine is busy at most 85% on CPU and memory, else print why and exit 1.
+# Run before spawning headless Chrome or a browser-driving subagent. If it fails, wait and retry.
+LIMIT=${RES_LIMIT:-85}
+cpu_idle=$(top -l 2 -n 0 -s 1 | awk '/CPU usage/ {v=$(NF-1)} END {sub("%","",v); print int(v)}')
+cpu_used=$((100 - cpu_idle))
+mem_free=$(memory_pressure -Q 2>/dev/null | awk -F': ' '/free percentage/ {sub("%","",$2); print int($2)}')
+mem_used=$((100 - ${mem_free:-100}))
+chromes=$(pgrep -f -- '--headless|remote-debugging-port' | wc -l | tr -d ' ')
+echo "cpu ${cpu_used}% · mem ${mem_used}% · headless chrome procs ${chromes} (limit ${LIMIT}%)"
+[ "$cpu_used" -lt "$LIMIT" ] && [ "$mem_used" -lt "$LIMIT" ]
