@@ -77,6 +77,7 @@ Priority:
 
 - **Visual sim, visual critique, screenshot, "does this look right"** → `browser-use` on real Chrome.
 - **Non-visual / scripted browse** — scrape, fill, navigate, DOM assertions, bulk, replay → `lightpanda`.
+- Inside Herdr, skip the `herdr-gpui-browser` skill: herdr-app 0.1.9 has no `browser` command and no web view (`Herdr --help` → exit 2). Print the file path or URL instead.
 - `browser-use` always runs headless. Never open a browser window on the owner's desktop.
 - **Check resources before spawning headless Chrome, or a subagent that drives one:** run `~/.agents/bin/res-ok`. It exits 1 when CPU or memory use is at 85% or more. If it fails, wait and retry, and do not spawn.
 - **Maintain headless Chrome:**
